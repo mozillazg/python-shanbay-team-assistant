@@ -103,15 +103,30 @@ class Shanbay(object):
         for member_html in members_html.find_all('tr', class_='member'):
             member_url = member_html.find_all('a', class_='nickname'
                                               )[0].attrs['href']
+            mail_url = member_html.find_all('td', class_='operation'
+                                            )[0].find('a').attrs['href']
+            username = mail_url.split('/')[-2]
+
             member = {
                 'id': self.get_url_id(member_url),
+                'username': username,
+                # 昵称
                 'nickname': get_tag_string(member_html, 'nickname', 'a'),
+                # 身份
                 'role': get_tag_string(member_html, 'role'),
-                'points': get_tag_string(member_html, 'points'),
-                'days': get_tag_string(member_html, 'days'),
-                'rate': get_tag_string(member_html, 'rate'),
-                'checked_yesterday': get_tag_string(member_html, 'checked'),
-                'checked_today': get_tag_string(member_html, 'checked', n=1)
+                # 贡献成长值
+                'points': int(get_tag_string(member_html, 'points')),
+                # 组龄
+                'days': int(get_tag_string(member_html, 'days')),
+                # 打卡率
+                'rate': float(get_tag_string(member_html, 'rate'
+                                             ).split('%')[0]),
+                # 昨天是否打卡
+                'checked_yesterday': get_tag_string(member_html, 'checked'
+                                                    ) != '未打卡',
+                # 今天是否打卡
+                'checked': get_tag_string(member_html, 'checked',
+                                          n=1) != '未打卡',
             }
             members.append(member)
         return members
@@ -143,3 +158,5 @@ class Shanbay(object):
         data.update(self.base_data_post)
         response = requests.post(url, data=data, **self.kwargs)
         return response.url == 'http://www.shanbay.com/17mail/inbox/'
+
+

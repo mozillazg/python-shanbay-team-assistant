@@ -23,8 +23,8 @@ def test_members():
     members = shanbay.members()
     print('')
     for member in members:
-        print('{id}, {nickname}, {role}, {points}, {days}, {rate}, '\
-              '{checked_yesterday}, {checked_today}'.format(**member))
+        print('{id}, {username}, {nickname}, {role}, {points}, {days}, '\
+              '{rate}, {checked_yesterday}, {checked}'.format(**member))
     assert True
 
 
