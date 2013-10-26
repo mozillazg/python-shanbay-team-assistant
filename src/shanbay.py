@@ -1,8 +1,13 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
+from __future__ import unicode_literals
 import copy
 import re
+try:
+    from urllib import urlencode
+except ImportError:
+    from urllib.parse import urlencode
 
 from bs4 import BeautifulSoup
 import requests
@@ -27,6 +32,7 @@ class Shanbay(object):
         self.cookies = None
         self.login(username, password)
         self.kwargs = dict(cookies=self.cookies, headers=self.headers)
+        self.team_id = None
 
     def login(self, username, password, url_login=None):
         """登录扇贝网"""
@@ -67,7 +73,7 @@ class Shanbay(object):
     def get_team_url(self):
         url = requests.get('http://www.shanbay.com/team/', **self.kwargs).url
         if url == 'http://www.shanbay.com/team/team/':
-            raise Exception(u'你还没有加入任何小组')
+            raise Exception('你还没有加入任何小组')
         else:
             return url
 
@@ -77,10 +83,12 @@ class Shanbay(object):
     def members(self, team_url=None):
         if team_url is None:
             team_url = self.get_team_url()
-        # 小组 id
-        team_id = self.get_url_id(team_url)
+        if self.team_id is None:
+            # 小组 id
+            self.team_id = self.get_url_id(team_url)
         # 小组管理 - 成员管理 url
-        dismiss_url = 'http://www.shanbay.com/team/show_dismiss/%s/' % team_id
+        dismiss_url = 'http://www.shanbay.com/team/show_dismiss/%s/'
+        dismiss_url = dismiss_url % self.team_id
         return self.single_page_members(dismiss_url)
 
     def single_page_members(self, dismiss_url):
@@ -111,12 +119,11 @@ class Shanbay(object):
             members.append(member)
         return members
 
-
-if __name__ == '__main__':
-    username = raw_input('username: ')
-    password = raw_input('password: ')
-    shanbay = Shanbay(username, password)
-    members =  shanbay.members()
-    for member in members:
-        print u'{id}, {nickname}, {role}, {role}, {points}, {days}, {rate}, '\
-              '{checked_yesterday}, {checked_today}'.format(**member)
+    def dismiss(self, member_id):
+        """踢人"""
+        url = 'http://www.shanbay.com/team/dismiss/?'
+        url += urlencode({
+            'team_id': self.team_id,
+            'dismiss_member_ids': member_id
+        })
+        return requests.get(url, **self.kwargs).ok
