@@ -7,14 +7,15 @@ import sys
 
 from src.shanbay import Shanbay
 
-username = raw_input('\nUsername: ')
-password = getpass()
-shanbay = Shanbay(username, password)
-encoding = sys.stdin.encoding
 try:
     input = raw_input
 except NameError:
     pass
+
+username = input('\nUsername: ')
+password = getpass()
+shanbay = Shanbay(username, password)
+encoding = sys.stdin.encoding
 
 
 def test_members():
@@ -33,6 +34,6 @@ def test_dismiss():
     print('')
     for member in members:
         print('{nickname}: {checked_today}'.format(**member))
-        confirm = raw_input('踢除？ (y/n)'.encode(encoding)).strip().lower()
+        confirm = input('踢除？ (y/n)'.encode(encoding)).strip().lower()
         if confirm.startswith('y'):
             print('成功踢除' if shanbay.dismiss(member['id']) else '剔除失败')
