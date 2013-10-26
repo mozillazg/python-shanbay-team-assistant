@@ -30,9 +30,12 @@ class Shanbay(object):
         else:
             self.headers = headers
         self.cookies = None
+        self.csrftoken = None
+        self.team_id = None
+        # 登录
         self.login(username, password)
         self.kwargs = dict(cookies=self.cookies, headers=self.headers)
-        self.team_id = None
+        self.base_data_post = {'csrfmiddlewaretoken': self.csrftoken}
 
     def login(self, username, password, url_login=None):
         """登录扇贝网"""
@@ -45,23 +48,17 @@ class Shanbay(object):
 
         # 准备用于登录的信息
         # 获取用于防 csrf 攻击的 cookies
-        token = self.cookies.get('csrftoken')
-        # 设置 headers
-        headers_post = copy.copy(self.headers)
-        headers_post.update({
-            'Refere': url_login,
-            'Content-Type': 'application/x-www-form-urlencoded',
-        })
+        self.csrftoken = self.cookies.get('csrftoken')
         # post 提交的内容
         data_post = {
-            'csrfmiddlewaretoken': token,  # csrf
+            'csrfmiddlewaretoken': self.csrftoken,
             'username': username,  # 用户名
             'password': password,  # 密码
             'login': '',
         }
 
         # 提交登录表单同时提交第一次访问网站时生成的 cookies
-        r_login = requests.post(url_login, headers=headers_post,
+        r_login = requests.post(url_login, headers=self.headers,
                                 cookies=self.cookies, data=data_post,
                                 allow_redirects=False, stream=True)
         if r_login.status_code == requests.codes.found:
@@ -127,3 +124,22 @@ class Shanbay(object):
             'dismiss_member_ids': member_id
         })
         return requests.get(url, **self.kwargs).ok
+
+    def send_mail(self, recipient_list, subject, message):
+        """发短信
+
+        :param recipient_list: 收件人列表
+        :param subject: 标题
+        :param message: 内容
+
+        """
+        url = 'http://www.shanbay.com/17mail/compose/'
+        recipient = ','.join(recipient_list)
+        data = {
+            'recipient': recipient,
+            'subject': subject,
+            'body': message
+        }
+        data.update(self.base_data_post)
+        response = requests.post(url, data=data, **self.kwargs)
+        return response.url == 'http://www.shanbay.com/17mail/inbox/'

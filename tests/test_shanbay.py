@@ -37,3 +37,19 @@ def test_dismiss():
         confirm = input('踢除？ (y/n)'.encode(encoding)).strip().lower()
         if confirm.startswith('y'):
             print('成功踢除' if shanbay.dismiss(member['id']) else '剔除失败')
+
+
+def test_send_mail():
+    """短信功能"""
+    to = ['mozillazg']
+    subject = '测试短信功能'
+    message = '测试短信功能'
+    shanbay.send_mail(to, subject, message)
+
+
+def test_send_mail_2():
+    """短信功能, 群发"""
+    to = ['mozillazg', 'shootout', 'wenzi2013']
+    subject = '测试短信群发功能'
+    message = '测试短信群发功能'
+    shanbay.send_mail(to, subject, message)
