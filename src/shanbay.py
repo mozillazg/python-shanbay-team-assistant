@@ -76,7 +76,7 @@ class Shanbay(object):
             return url
 
     def get_url_id(self, url):
-        return re.findall(r'(\d+)/?$', url)[0]
+        return re.findall(r'/(\d+)/?$', url)[0]
 
     def get_team_id(self):
         self.team_url = self.get_team_url()
@@ -178,3 +178,17 @@ class Shanbay(object):
         url = url % team_id
         response = requests.post(url, data=data, **self.kwargs)
         return response.url == self.team_url
+
+    def reply_topic(self, topic_id, content):
+        """小组回帖"""
+        data = {
+            'body': content
+        }
+        data.update(self.base_data_post)
+        url = 'http://www.shanbay.com/api/v1/forum/post/thread/%s' % topic_id
+        response = requests.post(url, data=data, **self.kwargs)
+        if self.team_url is None:
+            self.get_team_url()
+        topic_url = 'http://www.shanbay.com/team/thread/%s/%s/'
+        topic_url = topic_url % (self.team_url, topic_id)
+        return response.url == topic_url

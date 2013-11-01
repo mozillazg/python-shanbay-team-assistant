@@ -60,3 +60,9 @@ def test_new_topic():
     title = 'hello world'
     content = 'hello world'
     shanbay.new_topic(title, content)
+
+
+def test_reply_topic():
+    """小组回帖"""
+    content = 'reply'
+    shanbay.reply_topic(250459, content)
