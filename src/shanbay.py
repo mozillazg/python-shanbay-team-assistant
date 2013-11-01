@@ -201,3 +201,19 @@ class Shanbay(object):
                                               '%a, %d %b %Y %H:%M:%S GMT')
         # 北京时间 = UTC + 8 hours
         return date_utc + datetime.timedelta(hours=8)
+
+    def update_limit(self, days, kind=2, condition='>='):
+        """更新成员加入条件"""
+        if self.team_id is None:
+            self.get_team_id()
+        url = 'http://www.shanbay.com/team/setqualification/%s' % self.team_id
+        assert days > 0
+        data = {
+            'kind': kind,
+            'condition': condition,
+            'value': days,
+            'team': self.team_id
+        }
+        data.update(self.base_data_post)
+        response = requests.post(url, data=data, **self.kwargs)
+        return response.url == 'http://www.shanbay.com/invite/?kind=team'

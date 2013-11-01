@@ -72,3 +72,8 @@ def test_server_date():
     """服务器时间"""
     print('')
     print shanbay.server_date()
+
+
+def test_update_limit():
+    """更新成员加入条件"""
+    shanbay.update_limit(10)
