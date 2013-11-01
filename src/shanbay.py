@@ -2,7 +2,6 @@
 # -*- coding: utf-8 -*-
 
 from __future__ import unicode_literals
-import copy
 import re
 try:
     from urllib import urlencode
@@ -32,6 +31,7 @@ class Shanbay(object):
         self.cookies = None
         self.csrftoken = None
         self.team_id = None
+        self.team_url = None
         # 登录
         self.login(username, password)
         self.kwargs = dict(cookies=self.cookies, headers=self.headers)
@@ -72,17 +72,20 @@ class Shanbay(object):
         if url == 'http://www.shanbay.com/team/team/':
             raise Exception('你还没有加入任何小组')
         else:
+            self.team_url = url
             return url
 
     def get_url_id(self, url):
         return re.findall(r'(\d+)/?$', url)[0]
 
-    def members(self, team_url=None):
-        if team_url is None:
-            team_url = self.get_team_url()
+    def get_team_id(self):
+        self.team_url = self.get_team_url()
+        self.team_id = self.get_url_id(self.team_url)
+        return self.team_id
+
+    def members(self, team_id=None):
         if self.team_id is None:
-            # 小组 id
-            self.team_id = self.get_url_id(team_url)
+            self.get_team_id()
         # 小组管理 - 成员管理 url
         dismiss_url = 'http://www.shanbay.com/team/show_dismiss/%s/'
         dismiss_url = dismiss_url % self.team_id
@@ -159,4 +162,19 @@ class Shanbay(object):
         response = requests.post(url, data=data, **self.kwargs)
         return response.url == 'http://www.shanbay.com/17mail/inbox/'
 
-
+    def new_topic(self, title, content, team_id=None):
+        """小组发贴"""
+        data = {
+            'title': title,
+            'body': content
+        }
+        data.update(self.base_data_post)
+        if team_id is None:
+            if self.team_id is None:
+                team_id = self.get_team_id()
+            else:
+                team_id = self.team_id
+        url = 'http://www.shanbay.com/api/v1/forum/thread/team_forum_%s/'
+        url = url % team_id
+        response = requests.post(url, data=data, **self.kwargs)
+        return response.url == self.team_url
