@@ -2,6 +2,7 @@
 # -*- coding: utf-8 -*-
 
 from __future__ import unicode_literals
+import datetime
 import re
 try:
     from urllib import urlencode
@@ -192,3 +193,11 @@ class Shanbay(object):
         topic_url = 'http://www.shanbay.com/team/thread/%s/%s/'
         topic_url = topic_url % (self.team_url, topic_id)
         return response.url == topic_url
+
+    def server_date(self):
+        """获取扇贝网服务器时间（北京时间）"""
+        date_str = requests.head('http://www.shanbay.com').headers['date']
+        date_utc = datetime.datetime.strptime(date_str,
+                                              '%a, %d %b %Y %H:%M:%S GMT')
+        # 北京时间 = UTC + 8 hours
+        return date_utc + datetime.timedelta(hours=8)

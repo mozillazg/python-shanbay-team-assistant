@@ -66,3 +66,9 @@ def test_reply_topic():
     """小组回帖"""
     content = 'reply'
     shanbay.reply_topic(250459, content)
+
+
+def test_server_date():
+    """服务器时间"""
+    print('')
+    print shanbay.server_date()
