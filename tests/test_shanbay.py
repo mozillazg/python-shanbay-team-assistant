@@ -14,7 +14,8 @@ except NameError:
 
 username = input('\nUsername: ')
 password = getpass()
-shanbay = Shanbay(username, password)
+shanbay = Shanbay(username, password, team_id=5878,
+                  team_url='http://www.shanbay.com/team/show_dismiss/5878/')
 encoding = sys.stdin.encoding
 
 
@@ -23,7 +24,7 @@ def test_members():
     members = shanbay.members()
     print('')
     for member in members:
-        print('{id}, {username}, {nickname}, {role}, {points}, {days}, '\
+        print('{id}, {username}, {nickname}, {role}, {points}, {days}, '
               '{rate}, {checked_yesterday}, {checked}'.format(**member))
     assert True
 

@@ -20,7 +20,8 @@ class LoginException(Exception):
 
 
 class Shanbay(object):
-    def __init__(self, username, password, headers=None):
+    def __init__(self, username, password, team_id=None,
+                 team_url=None, headers=None):
         if headers is None:
             self.headers = {
                 'User-Agent': ('Mozilla/5.0 (Windows NT 6.2; rv:24.0) '
@@ -31,8 +32,8 @@ class Shanbay(object):
             self.headers = headers
         self.cookies = None
         self.csrftoken = None
-        self.team_id = None
-        self.team_url = None
+        self.team_id = team_id
+        self.team_url = team_url
         # 登录
         self.login(username, password)
         self.kwargs = dict(cookies=self.cookies, headers=self.headers)
@@ -85,15 +86,31 @@ class Shanbay(object):
         return self.team_id
 
     def members(self, team_id=None):
+        """获取小组成员"""
         if self.team_id is None:
             self.get_team_id()
         # 小组管理 - 成员管理 url
         dismiss_url = 'http://www.shanbay.com/team/show_dismiss/%s/'
-        dismiss_url = dismiss_url % self.team_id
-        return self.single_page_members(dismiss_url)
+        self.dismiss_url = dismiss_url % self.team_id
+
+        max_page = self.max_page(self.dismiss_url)
+        all_members = []
+        for page in range(1, max_page + 1):
+            url = '%s?page=%s' % (self.dismiss_url, page)
+            all_members.extend(self.single_page_members(url))
+        return tuple(all_members)
+
+    def max_page(self, url):
+        """最大页数"""
+        html = requests.get(url, **self.kwargs).text
+        soup = BeautifulSoup(html)
+        # 分页所在 div
+        pagination = soup.find_all(class_='pagination')[0]
+        pages = pagination.find_all('li')
+        return int(pages[-2].text) if pages else 1
 
     def single_page_members(self, dismiss_url):
-        """解析单个页面"""
+        """获取单个页面内的小组成员"""
         html = requests.get(dismiss_url, **self.kwargs).text
         soup = BeautifulSoup(html)
         members_html = soup.find(id='members')
@@ -133,7 +150,7 @@ class Shanbay(object):
                                           n=1) != '未打卡',
             }
             members.append(member)
-        return members
+        return tuple(members)
 
     def dismiss(self, member_id):
         """踢人"""
