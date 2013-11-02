@@ -234,3 +234,43 @@ class Shanbay(object):
         data.update(self.base_data_post)
         response = requests.post(url, data=data, **self.kwargs)
         return response.url == 'http://www.shanbay.com/invite/?kind=team'
+
+    def team_info(self):
+        """小组信息"""
+        html = requests.get(self.team_url, **self.kwargs).text
+        soup = BeautifulSoup(html)
+
+        team_header = soup.find_all(class_='team-header')[0]
+        # 标题
+        title = team_header.find_all(class_='title')[0].text.strip()
+        # 组长
+        leader = team_header.find_all(class_='leader'
+                                      )[0].find_all('a')[0].text.strip()
+        # 创建时间
+        date_str = team_header.find_all(class_='date')[0].text.strip()
+        date_created = datetime.datetime.strptime(date_str, '%Y/%m/%d')
+
+        team_stat = soup.find_all(class_='team-stat')[0]
+        # 排名
+        _str = team_stat.find_all(class_='rank')[0].text.strip()
+        rank = int(re.findall(r'\d+$', _str)[0])
+        # 成员数
+        _str = team_stat.find_all(class_='size')[0].text.strip()
+        number, max_number = map(int, re.findall(r'(\d+)/(\d+)$', _str)[0])
+        # 打卡率
+        _str = team_stat.find_all(class_='rate')[0].text.strip()
+        rate = float(re.findall(r'(\d+\.?\d+)%$', _str)[0])
+        # 总成长值
+        _str = team_stat.find_all(class_='points')[0].text.strip()
+        points = int(re.findall(r'\d+$', _str)[0])
+
+        return {
+            'title': title,
+            'leader': leader,
+            'date_created': date_created,
+            'rank': rank,
+            'number': number,
+            'max_number': max_number,
+            'rate': rate,
+            'points': points
+        }

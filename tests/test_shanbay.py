@@ -15,7 +15,7 @@ except NameError:
 username = input('\nUsername: ')
 password = getpass()
 shanbay = Shanbay(username, password, team_id=5878,
-                  team_url='http://www.shanbay.com/team/show_dismiss/5878/')
+                  team_url='http://www.shanbay.com/team/detail/5878/')
 encoding = sys.stdin.encoding
 
 
@@ -26,7 +26,6 @@ def test_members():
     for member in members:
         print('{id}, {username}, {nickname}, {role}, {points}, {days}, '
               '{rate}, {checked_yesterday}, {checked}'.format(**member))
-    assert True
 
 
 def test_dismiss():
@@ -72,9 +71,15 @@ def test_reply_topic():
 def test_server_date():
     """服务器时间"""
     print('')
-    print shanbay.server_date()
+    print(shanbay.server_date())
 
 
 def test_update_limit():
     """更新成员加入条件"""
     shanbay.update_limit(10)
+
+
+def test_team_info():
+    """小组信息"""
+    print('')
+    print(shanbay.team_info())
