@@ -20,8 +20,8 @@ class LoginException(Exception):
 
 
 class Shanbay(object):
-    def __init__(self, username, password, team_id=None,
-                 team_url=None, headers=None):
+    def __init__(self, username, password, team_id,
+                  team_url, headers=None):
         if headers is None:
             self.headers = {
                 'User-Agent': ('Mozilla/5.0 (Windows NT 6.2; rv:24.0) '
@@ -38,6 +38,8 @@ class Shanbay(object):
         self.login(username, password)
         self.kwargs = dict(cookies=self.cookies, headers=self.headers)
         self.base_data_post = {'csrfmiddlewaretoken': self.csrftoken}
+        dismiss_url = 'http://www.shanbay.com/team/show_dismiss/%s/'
+        self.dismiss_url = dismiss_url % self.team_id
 
     def login(self, username, password, url_login=None):
         """登录扇贝网"""
@@ -85,14 +87,9 @@ class Shanbay(object):
         self.team_id = self.get_url_id(self.team_url)
         return self.team_id
 
-    def members(self, team_id=None):
+    def members(self):
         """获取小组成员"""
-        if self.team_id is None:
-            self.get_team_id()
         # 小组管理 - 成员管理 url
-        dismiss_url = 'http://www.shanbay.com/team/show_dismiss/%s/'
-        self.dismiss_url = dismiss_url % self.team_id
-
         max_page = self.max_page(self.dismiss_url)
         all_members = []
         for page in range(1, max_page + 1):
@@ -180,20 +177,15 @@ class Shanbay(object):
         response = requests.post(url, data=data, **self.kwargs)
         return response.url == 'http://www.shanbay.com/17mail/inbox/'
 
-    def new_topic(self, title, content, team_id=None):
+    def new_topic(self, title, content):
         """小组发贴"""
         data = {
             'title': title,
             'body': content
         }
         data.update(self.base_data_post)
-        if team_id is None:
-            if self.team_id is None:
-                team_id = self.get_team_id()
-            else:
-                team_id = self.team_id
         url = 'http://www.shanbay.com/api/v1/forum/thread/team_forum_%s/'
-        url = url % team_id
+        url = url % self.team_id
         response = requests.post(url, data=data, **self.kwargs)
         return response.url == self.team_url
 
@@ -205,10 +197,8 @@ class Shanbay(object):
         data.update(self.base_data_post)
         url = 'http://www.shanbay.com/api/v1/forum/post/thread/%s' % topic_id
         response = requests.post(url, data=data, **self.kwargs)
-        if self.team_url is None:
-            self.get_team_url()
         topic_url = 'http://www.shanbay.com/team/thread/%s/%s/'
-        topic_url = topic_url % (self.team_url, topic_id)
+        topic_url = topic_url % (self.team_id, topic_id)
         return response.url == topic_url
 
     def server_date(self):
@@ -221,10 +211,8 @@ class Shanbay(object):
 
     def update_limit(self, days, kind=2, condition='>='):
         """更新成员加入条件"""
-        if self.team_id is None:
-            self.get_team_id()
         url = 'http://www.shanbay.com/team/setqualification/%s' % self.team_id
-        assert days > 0
+        assert days >= 0
         data = {
             'kind': kind,
             'condition': condition,
