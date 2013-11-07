@@ -102,7 +102,10 @@ class Shanbay(object):
         html = requests.get(url, **self.kwargs).text
         soup = BeautifulSoup(html)
         # 分页所在 div
-        pagination = soup.find_all(class_='pagination')[0]
+        try:
+            pagination = soup.find_all(class_='pagination')[0]
+        except IndexError:
+            return 1
         pages = pagination.find_all('li')
         return int(pages[-2].text) if pages else 1
 
