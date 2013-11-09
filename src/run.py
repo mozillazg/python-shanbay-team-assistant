@@ -3,7 +3,7 @@
 
 import datetime
 from getpass import getpass
-import os
+# import os
 from string import Template
 import sys
 
@@ -25,12 +25,22 @@ def output_member_info(member):
 
 
 def confirm(msg):
-    return input(msg.encode(encoding)).strip().lower().startswith('y')
+    while True:
+        c = input(msg.encode(encoding)).strip().lower()
+        if c == 'y':
+            return True
+        elif c == 'n':
+            return False
 
 
 def render(context, template_name):
     with open(template_name) as f:
-        result = Template(f.read()).substitute(context)
+        content = f.read()
+        try:
+            content = content.decode('utf8')
+        except UnicodeDecodeError:
+            content = content.decode('gbk', 'ignore')
+        result = Template(content).substitute(context)
     return result
 
 username = settings.username or input('Username: ')
@@ -43,7 +53,8 @@ current_time = shanbay.server_date().time()
 start_time = datetime.datetime.strptime(settings.start_time, '%H:%M').time()
 if current_time < start_time:
     print(u'时间还早者呢，请 {0} 后再操作!'.format(settings.start_time))
-    os._exit(1)
+    # os._exit(1)
+    sys.exit(1)
 
 # print(' 开始 '.center(78, '#'))
 
@@ -71,15 +82,25 @@ def main():
             # 新人
             if eval_bool(member['days'], settings.welcome):
                 output_member_info(member)
-                if confirm(u'是否发送欢迎短信? (y/n) '):
-                    if shanbay.send_mail([member['username']],
-                                         settings.welcome_title,
-                                         render(member, 'welcome_mail.txt')):
+                if shanbay.send_mail([member['username']],
+                                     settings.welcome_title,
+                                     render(member, 'welcome_mail.txt')):
 
-                        print(u'短信已发送')
-                    else:
-                        print(u'短信发送失败')
+                    print(u'欢迎短信已发送')
+                else:
+                    print(u'欢迎短信发送失败')
                 new_members.append(member)
+
+            # 恭喜
+            for days in settings.congratulate:
+                if member['days'] == days:
+                    output_member_info(member)
+                    if shanbay.send_mail([member['username']],
+                                         settings.congratulate_title,
+                                         render(member, 'congratulate_mail.txt')):
+                        print(u'恭喜短信已发送')
+                    else:
+                        print(u'恭喜短信发送失败')
 
             # 踢人
             condition_bool = False
@@ -103,48 +124,38 @@ def main():
                                          settings.dismiss_title,
                                          render(member, 'dismiss_mail.txt')):
 
-                        print(u'短信已发送')
-                        shanbay.dismiss(member['id'])
-                        print(u'已执行踢除操作')
+                        print(u'踢人短信已发送')
                     else:
-                        print(u'短信发送失败')
+                        print(u'踢人短信发送失败')
+                    if shanbay.dismiss(member['id']):
+                        print(u'已执行踢人操作')
+                    else:
+                        print(u'踢人失败')
                     dismiss_members.append(member)
-
-            # 警告
-            conditions = settings.warnning.split(':')
-            days, rate, checked, points = conditions
-            condition_bool = True
-            if days:
-                condition_bool = condition_bool and eval_bool(member['days'], days)
-            if rate:
-                condition_bool = condition_bool and eval_bool(member['rate'], rate)
-            if points:
-                condition_bool = condition_bool and eval_bool(member['points'], points)
-            if not int(checked):
-                condition_bool = condition_bool and (not member['checked'])
-            if condition_bool:
-                output_member_info(member)
-                if confirm(u'是否发送警告短信? (y/n) '):
-                    if shanbay.send_mail([member['username']],
-                                         settings.warnning_title,
-                                         render(member, 'warn_mail.txt')):
-
-                        print(u'短信已发送')
-                    else:
-                        print(u'短信发送失败')
-                warnning_members.append(member)
-
-            # 恭喜
-            for days in settings.congratulate:
-                if member['days'] == days:
+            else:
+                # 警告
+                conditions = settings.warnning.split(':')
+                days, rate, checked, points = conditions
+                condition_bool = True
+                if days:
+                    condition_bool = condition_bool and eval_bool(member['days'], days)
+                if rate:
+                    condition_bool = condition_bool and eval_bool(member['rate'], rate)
+                if points:
+                    condition_bool = condition_bool and eval_bool(member['points'], points)
+                if not int(checked):
+                    condition_bool = condition_bool and (not member['checked'])
+                if condition_bool:
                     output_member_info(member)
-                    if confirm(u'是否发送恭喜短信? (y/n) '):
+                    if confirm(u'是否发送警告短信? (y/n) '):
                         if shanbay.send_mail([member['username']],
-                                             settings.congratulate_title,
-                                             render(member, 'congratulate_mail.txt')):
-                            print(u'短信已发送')
+                                             settings.warnning_title,
+                                             render(member, 'warn_mail.txt')):
+
+                            print(u'警告短信已发送')
                         else:
-                            print(u'短信发送失败')
+                            print(u'警告短信发送失败')
+                    warnning_members.append(member)
 
     # print(members)
     # print(len(members))

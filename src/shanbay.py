@@ -3,6 +3,7 @@
 
 from __future__ import unicode_literals
 import datetime
+import logging
 import re
 try:
     from urllib import urlencode
@@ -11,6 +12,8 @@ except ImportError:
 
 from bs4 import BeautifulSoup
 import requests
+
+logger = logging.getLogger(__name__)
 
 
 class LoginException(Exception):
@@ -65,6 +68,7 @@ class Shanbay(object):
         r_login = requests.post(url_login, headers=self.headers,
                                 cookies=self.cookies, data=data_post,
                                 allow_redirects=False, stream=True)
+        logger.debug(r_login.url)
         if r_login.status_code == requests.codes.found:
             # 更新 cookies
             self.cookies.update(r_login.cookies.get_dict())
@@ -178,6 +182,7 @@ class Shanbay(object):
         }
         data.update(self.base_data_post)
         response = requests.post(url, data=data, **self.kwargs)
+        logger.debug(response.url)
         return response.url == 'http://www.shanbay.com/17mail/inbox/'
 
     def new_topic(self, title, content):
@@ -190,6 +195,7 @@ class Shanbay(object):
         url = 'http://www.shanbay.com/api/v1/forum/thread/team_forum_%s/'
         url = url % self.team_id
         response = requests.post(url, data=data, **self.kwargs)
+        logger.debug(response.url)
         return response.url == self.team_url
 
     def reply_topic(self, topic_id, content):
@@ -202,6 +208,7 @@ class Shanbay(object):
         response = requests.post(url, data=data, **self.kwargs)
         topic_url = 'http://www.shanbay.com/team/thread/%s/%s/'
         topic_url = topic_url % (self.team_id, topic_id)
+        logger.debug(response.url)
         return response.url == topic_url
 
     def server_date(self):
@@ -224,6 +231,7 @@ class Shanbay(object):
         }
         data.update(self.base_data_post)
         response = requests.post(url, data=data, **self.kwargs)
+        logger.debug(response.url)
         return response.url == 'http://www.shanbay.com/invite/?kind=team'
 
     def team_info(self):
