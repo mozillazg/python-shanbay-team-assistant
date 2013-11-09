@@ -1,0 +1,3 @@
+Hi, ${nickname}:
+
+Congratulate ${days} days!
