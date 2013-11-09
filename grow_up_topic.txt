@@ -1,7 +1,0 @@
-排名 ${rank}
-
-成员数 ${number}/${max_number}
-
-打卡率 ${rate}%
-
-总成长值 ${points}

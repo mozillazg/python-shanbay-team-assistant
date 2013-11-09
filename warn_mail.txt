@@ -1,3 +1,0 @@
-Hi, ${nickname}:
-
-Warning: you'll be dismissed.
