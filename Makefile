@@ -1,8 +1,12 @@
-.DEFAULT: exe
+.DEFAULT: py2exe
 
-exe:
+pyinstaller:
 	@echo "make assistant.exe"
 	"e:\Python27\Scripts\pyinstaller.exe" assistant.spec
+
+py2exe:
+	@echo "py2exe"
+	python setup.py py2exe
 # 
 # publish:
 # 	@echo "publish to pypi"
