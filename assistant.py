@@ -1,6 +1,8 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
+__version__ = '0.1.0'
+
 import datetime
 from getpass import getpass
 import logging
@@ -43,12 +45,9 @@ def render(context, template_name):
     with open(template_name) as f:
         content = f.read()
         try:
-            content = content.decode('utf8')
+            content = content.decode('utf-8-sig')
         except UnicodeDecodeError:
-            try:
-                content = content.decode('utf-8-sig')
-            except UnicodeDecodeError:
-                content = content.decode('gbk', 'ignore')
+            content = content.decode('gbk', 'ignore')
         result = Template(content).substitute(context)
     return result
 
@@ -95,7 +94,7 @@ def main():
         for member in members:
             if member['username'].lower() == username.lower():
                 continue
-
+            print('')
             output_member_info(member)
             # 新人
             if eval_bool(member['days'], settings.welcome):
@@ -194,6 +193,7 @@ def main():
         shanbay.update_limit(settings.default_limit)
 
 if __name__ == '__main__':
+    print(u'版本：%s' % __version__)
     while True:
         try:
             main()
