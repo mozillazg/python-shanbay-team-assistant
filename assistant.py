@@ -54,7 +54,7 @@ logging.basicConfig(filename='debug.log', level=logging.INFO,
                     ' %(message)s')
 
 def main():
-    username = settings.username or input('Username: ')
+    username = settings.username or input('Username: ').decode(encoding).strip()
     password = settings.password or getpass()
 
     shanbay = Shanbay(username, password, settings.team_id, settings.team_url)
@@ -89,6 +89,8 @@ def main():
         all_members.extend(members)
         # 对成员进行操作
         for member in members:
+            if member['username'].lower() == username.lower():
+                continue
             # 新人
             if eval_bool(member['days'], settings.welcome):
                 output_member_info(member)
