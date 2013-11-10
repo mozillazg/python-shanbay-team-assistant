@@ -19,10 +19,14 @@ except NameError:
     pass
 encoding = sys.stdin.encoding
 
+
 def output_member_info(member):
-    print((u'{nickname}, 组龄: {days} 贡献值成长值：{points} '
-          u'打卡率: {rate}% 今天是否打卡: ' ''.format(**member)
-          + (u'是' if member['checked'] else u'否')).encode(encoding, 'ignore')
+    print((u'{nickname} 组龄: {days} 贡献值成长值：{points} '
+           u'打卡率: {rate}% 昨天是否打卡: ' ''.format(**member)
+           + (u'是' if member['checked_yesterday'] else u'否')
+           + u' 今天是否打卡：'
+           + (u'是' if member['checked_yesterday'] else u'否')
+           ).encode(encoding, 'ignore')
           )
 
 
@@ -177,9 +181,9 @@ def main():
 
     if confirm(u'更新查卡贴 (y/n)'):
         context = {
-                'today': shanbay.server_date().strftime('%Y-%m-%d'),
-                'number': len(dismiss_members)
-                }
+            'today': shanbay.server_date().strftime('%Y-%m-%d'),
+            'number': len(dismiss_members)
+        }
         content = render(context, 'dismiss_topic.txt')
         shanbay.reply_topic(settings.dismiss_topic_id, content)
 
