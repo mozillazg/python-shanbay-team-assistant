@@ -3,12 +3,24 @@
 
 from __future__ import unicode_literals
 import ConfigParser
+import sys
 
+encoding = sys.stdin.encoding
 # 读取配置文件
 conf = ConfigParser.RawConfigParser()
 conf.read('settings.ini')
 
-_ = lambda key: conf.get('General', key)
+def _(key):
+    value = conf.get('General', key)
+    try:
+        value = value.decode('utf8')
+    except UnicodeDecodeError:
+        try:
+            value = value.decode('utf-8-sig')
+        except UnicodeDecodeError:
+            value = value.decode('gbk', 'ignore')
+    return value
+
 
 # 小组信息
 team_id = _('team_id')

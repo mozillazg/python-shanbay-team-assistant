@@ -1,3 +1,3 @@
 Hi, ${nickname}:
 
-欢迎加入我们小组
+欢迎 join our team!

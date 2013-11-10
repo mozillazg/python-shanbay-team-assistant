@@ -1,3 +1,0 @@
-Hi, ${nickname}:
-
-You has been dismissed.

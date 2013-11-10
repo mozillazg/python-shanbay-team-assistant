@@ -1,3 +1,0 @@
-Hi, ${nickname}:
-
-Welcome join our team!
