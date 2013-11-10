@@ -95,9 +95,10 @@ def main():
         for member in members:
             if member['username'].lower() == username.lower():
                 continue
+
+            output_member_info(member)
             # 新人
             if eval_bool(member['days'], settings.welcome):
-                output_member_info(member)
                 if shanbay.send_mail([member['username']],
                                      settings.welcome_title,
                                      render(member, 'welcome_mail.txt')):
@@ -110,7 +111,6 @@ def main():
             # 恭喜
             for days in settings.congratulate:
                 if member['days'] == days:
-                    output_member_info(member)
                     if shanbay.send_mail([member['username']],
                                          settings.congratulate_title,
                                          render(member, 'congratulate_mail.txt')):
@@ -134,7 +134,6 @@ def main():
                 condition_bool = condition_bool or bool_
             # print condition_bool
             if condition_bool:
-                output_member_info(member)
                 if confirm(u'是否发送踢人短信并踢人? (y/n) '):
                     if shanbay.send_mail([member['username']],
                                          settings.dismiss_title,
@@ -162,7 +161,6 @@ def main():
                 if not int(checked):
                     condition_bool = condition_bool and (not member['checked'])
                 if condition_bool:
-                    output_member_info(member)
                     if confirm(u'是否发送警告短信? (y/n) '):
                         if shanbay.send_mail([member['username']],
                                              settings.warnning_title,
