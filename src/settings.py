@@ -3,23 +3,29 @@
 
 from __future__ import unicode_literals
 import ConfigParser
+from StringIO import StringIO
 import sys
 
 encoding = sys.stdin.encoding
+
+
+def _decode(string):
+    try:
+        string = string.decode('utf-8-sig')
+    except UnicodeDecodeError:
+        string = string.decode('gbk', 'ignore')
+    return string
+
 # 读取配置文件
 conf = ConfigParser.RawConfigParser()
-conf.read('settings.ini')
+with open('settings.ini', 'rb') as f:
+    content = _decode(f.read()).encode('utf8')
+    conf.readfp(StringIO(content))
+
 
 def _(key):
     value = conf.get('General', key)
-    try:
-        value = value.decode('utf8')
-    except UnicodeDecodeError:
-        try:
-            value = value.decode('utf-8-sig')
-        except UnicodeDecodeError:
-            value = value.decode('gbk', 'ignore')
-    return value
+    return _decode(value)
 
 
 # 小组信息
