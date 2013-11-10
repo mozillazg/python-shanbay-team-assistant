@@ -27,7 +27,7 @@ def output_member_info(member):
            u'打卡率: {rate}% 昨天是否打卡: ' ''.format(**member)
            + (u'是' if member['checked_yesterday'] else u'否')
            + u' 今天是否打卡：'
-           + (u'是' if member['checked_yesterday'] else u'否')
+           + (u'是' if member['checked'] else u'否')
            ).encode(encoding, 'ignore')
           )
 
