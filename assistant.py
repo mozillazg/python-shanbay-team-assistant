@@ -22,6 +22,16 @@ except NameError:
 encoding = sys.stdin.encoding
 
 
+logger = logging.getLogger(__name__)
+logger.setLevel(logging.DEBUG)
+fh = logging.FileHandler('debug.log')
+formatter = logging.Formatter('%(asctime)s - %(name)s '
+                              '- %(funcName)s - %(lineno)d - %(levelname)s -'
+                              ' %(message)s')
+fh.setFormatter(formatter)
+logger.addHandler(fh)
+
+
 def output_member_info(member):
     print((u'{nickname} 组龄: {days} 贡献值成长值：{points} '
            u'打卡率: {rate}% 昨天是否打卡: ' ''.format(**member)
@@ -51,10 +61,6 @@ def render(context, template_name):
         result = Template(content).substitute(context)
     return result
 
-logging.basicConfig(filename='debug.log', level=logging.INFO,
-                    format='%(asctime)s - %(name)s - %(filename)s '
-                    '- %(funcName)s - %(lineno)d - %(levelname)s -'
-                    ' %(message)s')
 
 def main():
     username = settings.username or input('Username: ').decode(encoding).strip()
@@ -202,6 +208,6 @@ if __name__ == '__main__':
         except LoginException:
             print(u'登录失败')
         except:
-            logging.exception('')
+            logger.exception('')
         if confirm(u'退出? (y/n) '):
             break
