@@ -1,17 +1,31 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-from distutils.core import setup
-import py2exe
+from cx_Freeze import setup, Executable
 
 options = {
-    'py2exe': {
-        'optimize': 2,
-        'compressed': 1,
-        # 'bundle_files': 1,
-        'includes': ['lxml', 'html5lib'],
-        # 'packages': ['lxml', 'html5lib']
+    'build_exe': {
+        # 'init_script': 'Console',
+        'includes': ['lxml'],
+        # 'packages': ['lxml'],
+        'icon': 'shanbay.ico',
+        'include_files': [
+            'settings.ini',
+            'welcome_mail.txt',
+            'congratulate_mail.txt',
+            'warn_mail.txt',
+            'dismiss_mail.txt',
+            'grow_up_topic.txt',
+            'dismiss_topic.txt',
+         ],
+        'include_msvcr': True,
     }
 }
 
-setup(console=['assistant.py'], options=options)
+setup(
+    name='assistant',
+    version='0.1.0',
+    description='shanbay.com team assistant',
+    options=options,
+    executables=[Executable("assistant.py")]
+)
