@@ -69,7 +69,8 @@ def main():
     shanbay = Shanbay(username, password, settings.team_id, settings.team_url)
 
     # 判断当前时间
-    current_time = shanbay.server_date().time()
+    current_datetime = shanbay.server_date()
+    current_time = current_datetime.time()
     start_time = datetime.datetime.strptime(settings.start_time, '%H:%M').time()
     if current_time < start_time:
         print(u'时间还早者呢，请 {0} 后再操作!'.format(settings.start_time))
@@ -184,7 +185,7 @@ def main():
 
     if confirm(u'更新查卡贴 (y/n)'):
         context = {
-            'today': shanbay.server_date().strftime('%Y-%m-%d'),
+            'today': current_datetime.strftime('%Y-%m-%d'),
             'number': len(dismiss_members)
         }
         content = render(context, 'dismiss_topic.txt')
