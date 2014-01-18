@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-__version__ = '0.1.0'
+__version__ = '0.1.1'
 
 import datetime
 from getpass import getpass
@@ -98,6 +98,7 @@ def main():
 
     if confirm(u'设置小组成员加入条件为：打卡天数>={0} (y/n) '.format(limit)):
         shanbay.update_limit(limit)
+    print('')
     for page in range(1, max_page + 1):
         print(u'第%s页' % page)
         # if not confirm(u'操作当前页面？ (y/n) '):
@@ -109,7 +110,6 @@ def main():
         for member in members:
             if member['username'].lower() == username.lower():
                 continue
-            print('')
             output_member_info(member)
             # 新人
             if eval_bool(member['days'], settings.welcome):
@@ -149,15 +149,16 @@ def main():
             # print condition_bool
             if condition_bool:
                 if confirm(u'是否发送踢人短信并踢人? (y/n) '):
-                    if shanbay.send_mail([member['username']],
-                                         settings.dismiss_title,
-                                         render(member, 'dismiss_mail.txt')):
-
-                        print(u'踢人短信已发送')
-                    else:
-                        print(u'踢人短信发送失败')
                     if shanbay.dismiss(member['id']):
                         print(u'已执行踢人操作')
+                        if shanbay.send_mail([member['username']],
+                                             settings.dismiss_title,
+                                             render(member, 'dismiss_mail.txt')
+                                             ):
+
+                            print(u'踢人短信已发送')
+                        else:
+                            print(u'踢人短信发送失败')
                     else:
                         print(u'踢人失败')
                     dismiss_members.append(member)
@@ -184,6 +185,7 @@ def main():
                         else:
                             print(u'警告短信发送失败')
                     warnning_members.append(member)
+            print('')
 
     # print(members)
     # print(len(members))
