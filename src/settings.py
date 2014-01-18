@@ -58,5 +58,11 @@ congratulate_title = _('congratulate_title')
 dismiss_topic_id = _('dismiss_topic_id')
 grow_up_topic_id = _('grow_up_topic_id')
 
+# 确认
+try:
+    confirm = bool(int(_('confirm')))
+except:
+    confirm = True
+
 if __name__ == '__main__':
     print(locals())

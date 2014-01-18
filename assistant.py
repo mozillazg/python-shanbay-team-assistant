@@ -6,6 +6,7 @@ __version__ = '0.1.0'
 import datetime
 from getpass import getpass
 import logging
+import io
 # import os
 from string import Template
 import sys
@@ -43,7 +44,11 @@ def output_member_info(member):
 
 
 def confirm(msg):
+    """提示信息"""
     while True:
+        if not settings.confirm:
+            print(msg)
+            return True
         c = input(msg.encode(encoding)).strip().lower()
         if c == 'y':
             return True
@@ -74,8 +79,11 @@ def main():
     start_time = datetime.datetime.strptime(settings.start_time, '%H:%M').time()
     if current_time < start_time:
         print(u'时间还早者呢，请 {0} 后再操作!'.format(settings.start_time))
-        # os._exit(1)
-        sys.exit(1)
+        if confirm(u'设置小组成员加入条件为：打卡天数>=%s (y/n) ' %
+                   settings.default_limit):
+            shanbay.update_limit(settings.default_limit)
+        # os._exit(0)
+        sys.exit(0)
 
     # print(' 开始 '.center(78, '#'))
 
