@@ -10,6 +10,7 @@ import io
 # import os
 from string import Template
 import sys
+import time
 
 from src import settings
 from src.shanbay import LoginException
@@ -48,6 +49,7 @@ def confirm(msg):
     while True:
         if not settings.confirm:
             print(msg)
+            time.sleep(3)
             return True
         c = input(msg.encode(encoding)).strip().lower()
         if c == 'y':
