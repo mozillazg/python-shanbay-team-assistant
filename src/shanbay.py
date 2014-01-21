@@ -72,6 +72,7 @@ class Shanbay(object):
         if r_login.status_code == requests.codes.found:
             # 更新 cookies
             self.cookies.update(r_login.cookies.get_dict())
+            self.csrftoken = self.cookies.get('csrftoken') or self.csrftoken
         else:
             raise LoginException
 
