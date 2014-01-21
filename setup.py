@@ -23,7 +23,7 @@ options = {
 }
 
 setup(
-    name='assistant',
+    name='shanbay-team-assistant',
     version='0.1.0',
     description='shanbay.com team assistant',
     options=options,
