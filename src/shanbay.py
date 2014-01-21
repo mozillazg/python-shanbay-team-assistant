@@ -119,6 +119,8 @@ class Shanbay(object):
         html = requests.get(dismiss_url, **self.kwargs).text
         soup = BeautifulSoup(html)
         members_html = soup.find(id='members')
+        if not members_html:
+            return ()
 
         def get_tag_string(html, class_, tag='td', n=0):
             """获取单个 tag 的文本数据"""
