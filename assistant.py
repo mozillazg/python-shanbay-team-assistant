@@ -1,13 +1,11 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-__version__ = '0.1.1'
+__version__ = '0.1.2'
 
 import datetime
 from getpass import getpass
 import logging
-import io
-# import os
 from string import Template
 import sys
 import time
@@ -49,7 +47,7 @@ def confirm(msg):
     while True:
         if not settings.confirm:
             print(msg)
-            time.sleep(3)
+            time.sleep(2)
             return True
         c = input(msg.encode(encoding)).strip().lower()
         if c == 'y':
@@ -145,7 +143,7 @@ def main():
                     bool_ = bool_ and eval_bool(member['rate'], rate)
                 if points:
                     bool_ = bool_ and eval_bool(member['points'], points)
-                if not int(checked):
+                if checked and not int(checked):
                     bool_ = bool_ and (not member['checked'])
                 condition_bool = condition_bool or bool_
             # print condition_bool
@@ -207,8 +205,8 @@ def main():
         content = render(shanbay.team_info(), 'grow_up_topic.txt')
         shanbay.reply_topic(settings.grow_up_topic_id, content)
 
-    if confirm(u'设置小组成员加入条件为：打卡天数>=%s (y/n) ' %
-               settings.default_limit):
+    if settings.confirm and confirm(u'设置小组成员加入条件为：打卡天数>=%s (y/n) '
+                                    % settings.default_limit):
         shanbay.update_limit(settings.default_limit)
 
 if __name__ == '__main__':
