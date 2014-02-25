@@ -4,9 +4,6 @@
 from __future__ import unicode_literals
 import ConfigParser
 from StringIO import StringIO
-import sys
-
-encoding = sys.stdin.encoding
 
 
 def _decode(string):
@@ -65,4 +62,5 @@ except:
     confirm = True
 
 if __name__ == '__main__':
-    print(locals())
+    from pprint import pprint
+    pprint(locals())
