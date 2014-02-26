@@ -66,19 +66,26 @@ def render(context, template_name):
     return result
 
 
-def retry_shanbay(shanbay_method, ignore=False, *args, **kwargs):
-    """重试功能"""
-    n = 10
+def retry_shanbay(shanbay_method, ignore=False, catch='exception',
+                  *args, **kwargs):
+    """重试功能, catch: exception, bool"""
+    n = 5
     for __ in range(n):
         try:
-            return shanbay_method(*args, **kwargs)
+            result = shanbay_method(*args, **kwargs)
+            if catch == 'bool':
+                assert result
+            return result
             break
         except:
-            time.sleep(1)
+            time.sleep(5)
             pass
     else:
         try:
-            return shanbay_method(*args, **kwargs)
+            result = shanbay_method(*args, **kwargs)
+            if catch == 'bool':
+                assert result
+            return result
         except Exception as e:
             if ignore:
                 print(u'exec %s fail' % shanbay_method)
@@ -92,19 +99,19 @@ def main():
     password = settings.password or getpass()
 
     # shanbay = Shanbay(username, password, settings.team_id, settings.team_url)
-    shanbay = retry_shanbay(Shanbay, False,
+    shanbay = retry_shanbay(Shanbay, False, 'exception',
                             username, password, settings.team_id,
                             settings.team_url)
 
     # 判断当前时间
-    current_datetime = retry_shanbay(shanbay.server_date, False)
+    current_datetime = retry_shanbay(shanbay.server_date, False, 'exception')
     current_time = current_datetime.time()
     start_time = datetime.datetime.strptime(settings.start_time, '%H:%M').time()
     if current_time < start_time:
         print(u'时间还早者呢，请 {0} 后再操作!'.format(settings.start_time))
         if confirm(u'设置小组成员加入条件为：打卡天数>=%s (y/n) ' %
                    settings.default_limit):
-            if retry_shanbay(shanbay.update_limit, False,
+            if retry_shanbay(shanbay.update_limit, False, 'bool',
                              settings.default_limit):
                 print(u'设置更新成功')
             else:
@@ -116,12 +123,13 @@ def main():
     new_members = []       # 新人
     warnning_members = []  # 警告
     dismiss_members = []   # 踢人
-    max_page = retry_shanbay(shanbay.max_page, False, shanbay.dismiss_url)
+    max_page = retry_shanbay(shanbay.max_page, False, 'exception',
+                             shanbay.dismiss_url)
     # 设置加入条件
     limit = settings.limit
 
     if confirm(u'设置小组成员加入条件为：打卡天数>={0} (y/n) '.format(limit)):
-        if retry_shanbay(shanbay.update_limit, False, limit):
+        if retry_shanbay(shanbay.update_limit, False, 'bool', limit):
             print(u'设置更新成功')
         else:
             print(u'设置更新失败')
@@ -129,7 +137,8 @@ def main():
     for page in range(1, max_page + 1):
         print(u'获取第%s页的所有成员' % page)
         url = '%s?page=%s' % (shanbay.dismiss_url, page)
-        members = retry_shanbay(shanbay.single_page_members, False, url)
+        members = retry_shanbay(shanbay.single_page_members, False,
+                                'exception', url)
         all_members.extend(members)
         if not settings.confirm:
             print(u'%s人' % len(members))
@@ -148,7 +157,7 @@ def main():
         output_member_info(member)
         # 新人
         if eval_bool(member['days'], settings.welcome):
-            if retry_shanbay(shanbay.send_mail, True,
+            if retry_shanbay(shanbay.send_mail, True, 'bool',
                              [member['username']], settings.welcome_title,
                              render(member, 'welcome_mail.txt')):
 
@@ -160,7 +169,7 @@ def main():
         # 恭喜
         for days in settings.congratulate:
             if member['days'] == days:
-                if retry_shanbay(shanbay.send_mail, True,
+                if retry_shanbay(shanbay.send_mail, True, 'bool',
                                  [member['username']],
                                  settings.congratulate_title,
                                  render(member, 'congratulate_mail.txt')):
@@ -185,9 +194,9 @@ def main():
         # print condition_bool
         if condition_bool:
             if confirm(u'是否发送踢人短信并踢人? (y/n) '):
-                if retry_shanbay(shanbay.dismiss, False, member['id']):
+                if retry_shanbay(shanbay.dismiss, False, 'bool', member['id']):
                     print(u'已执行踢人操作')
-                    if retry_shanbay(shanbay.send_mail, True,
+                    if retry_shanbay(shanbay.send_mail, True, 'bool',
                                      [member['username']],
                                      settings.dismiss_title,
                                      render(member, 'dismiss_mail.txt')):
@@ -213,7 +222,7 @@ def main():
                 condition_bool = condition_bool and (not member['checked'])
             if condition_bool:
                 if confirm(u'是否发送警告短信? (y/n) '):
-                    if retry_shanbay(shanbay.send_mail, True,
+                    if retry_shanbay(shanbay.send_mail, True, 'bool',
                                      [member['username']],
                                      settings.warnning_title,
                                      render(member, 'warn_mail.txt')):
@@ -242,18 +251,18 @@ def main():
         if not settings.confirm:
             print(context)
         content = render(context, 'dismiss_topic.txt')
-        if retry_shanbay(shanbay.reply_topic, False,
+        if retry_shanbay(shanbay.reply_topic, False, 'bool',
                          settings.dismiss_topic_id, content):
             print(u'帖子更新成功')
         else:
             print(u'帖子更新失败')
 
     if confirm(u'更新小组数据贴 (y/n) '):
-        context = retry_shanbay(shanbay.team_info, False)
+        context = retry_shanbay(shanbay.team_info, False, 'exception')
         if not settings.confirm:
             print(context)
         content = render(context, 'grow_up_topic.txt')
-        if retry_shanbay(shanbay.reply_topic, False,
+        if retry_shanbay(shanbay.reply_topic, False, 'bool',
                          settings.grow_up_topic_id, content):
             print(u'帖子更新成功')
         else:
@@ -261,7 +270,8 @@ def main():
 
     if settings.confirm and confirm(u'设置小组成员加入条件为：打卡天数>=%s (y/n) '
                                     % settings.default_limit):
-        if retry_shanbay(shanbay.update_limit, False, settings.default_limit):
+        if retry_shanbay(shanbay.update_limit, False, 'bool',
+                         settings.default_limit):
             print(u'设置更新成功')
         else:
             print(u'设置更新失败')
@@ -276,6 +286,7 @@ if __name__ == '__main__':
         except LoginException:
             print(u'登录失败')
         except:
+            print(u'程序运行中出现错误了')
             logger.exception('')
         if confirm(u'退出? (y/n) '):
             break
