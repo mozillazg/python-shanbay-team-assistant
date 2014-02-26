@@ -23,26 +23,32 @@ class LoginException(Exception):
 
 
 class Shanbay(object):
-    def __init__(self, username, password, team_id,
-                  team_url, headers=None):
-        if headers is None:
-            self.headers = {
-                'User-Agent': ('Mozilla/5.0 (Windows NT 6.2; rv:24.0) '
-                               'Gecko/20100101 Firefox/24.0'),
-                'Host': 'www.shanbay.com'
-            }
-        else:
-            self.headers = headers
-        self.cookies = None
-        self.csrftoken = None
+    default_headers = {
+        'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+        'Accept-Encoding': 'gzip, deflate',
+        'Accept-Language': 'en-US,en;q=0.5',
+        'Cache-Control': 'max-age=0',
+        'Connection': 'keep-alive',
+        'DNT': 1,
+        'Host': 'www.shanbay.com',
+        'User-Agent': 'Mozilla/5.0 (Windows NT 6.2; rv:26.0) Gecko/20100101 Firefox/26.0',
+    }
+    dismiss_url = 'http://www.shanbay.com/team/show_dismiss/%s/'
+    url_base_team_new_topic = 'http://www.shanbay.com/api/v1/forum/%s/thread/'
+    url_base_team_reply_topic = 'http://www.shanbay.com/api/v1/forum/thread/%s/post/'
+
+    def __init__(self, username, password, team_id, team_url, headers=None):
+        self.headers = headers or Shanbay.default_headers
+        self.cookies = {}
         self.team_id = team_id
         self.team_url = team_url
+        self.kwargs = dict(cookies=self.cookies, headers=self.headers)
+        self.dismiss_url = Shanbay.dismiss_url % self.team_id
+        self.base_data_post = {'csrfmiddlewaretoken': ''}
+
         # 登录
         self.login(username, password)
-        self.kwargs = dict(cookies=self.cookies, headers=self.headers)
-        self.base_data_post = {'csrfmiddlewaretoken': self.csrftoken}
-        dismiss_url = 'http://www.shanbay.com/team/show_dismiss/%s/'
-        self.dismiss_url = dismiss_url % self.team_id
+        self.team_forum_id = self.get_team_forum_id()
 
     def login(self, username, password, url_login=None):
         """登录扇贝网"""
@@ -51,7 +57,7 @@ class Shanbay(object):
         # 首先访问一次网站，获取 cookies
         r_first_vist = requests.head(url_login, headers=self.headers)
         # 获取 cookies 信息
-        self.cookies = r_first_vist.cookies.get_dict()
+        self.cookies.update(r_first_vist.cookies.get_dict())
 
         # 准备用于登录的信息
         # 获取用于防 csrf 攻击的 cookies
@@ -65,14 +71,15 @@ class Shanbay(object):
         }
 
         # 提交登录表单同时提交第一次访问网站时生成的 cookies
-        r_login = requests.post(url_login, headers=self.headers,
-                                cookies=self.cookies, data=data_post,
-                                allow_redirects=False, stream=True)
+        r_login = requests.post(url_login, data=data_post,
+                                allow_redirects=False, stream=True,
+                                **self.kwargs)
         logger.debug(r_login.url)
         if r_login.status_code == requests.codes.found:
             # 更新 cookies
             self.cookies.update(r_login.cookies.get_dict())
             self.csrftoken = self.cookies.get('csrftoken') or self.csrftoken
+            self.base_data_post['csrfmiddlewaretoken'] = self.csrftoken
         else:
             raise LoginException
 
@@ -91,6 +98,12 @@ class Shanbay(object):
         self.team_url = self.get_team_url()
         self.team_id = self.get_url_id(self.team_url)
         return self.team_id
+
+    def get_team_forum_id(self):
+        """发帖要用的 forum_id"""
+        html = requests.get(self.team_url, **self.kwargs).text
+        soup = BeautifulSoup(html)
+        return soup.find(id='forum_id').attrs['value']
 
     def members(self):
         """获取小组成员"""
@@ -195,11 +208,10 @@ class Shanbay(object):
             'body': content
         }
         data.update(self.base_data_post)
-        url = 'http://www.shanbay.com/api/v1/forum/thread/team_forum_%s/'
-        url = url % self.team_id
+        url = Shanbay.url_base_team_new_topic % self.team_forum_id
         response = requests.post(url, data=data, **self.kwargs)
         logger.debug(response.url)
-        return response.url == self.team_url
+        return response.json()['status']['status_code'] == 0
 
     def reply_topic(self, topic_id, content):
         """小组回帖"""
@@ -207,12 +219,10 @@ class Shanbay(object):
             'body': content
         }
         data.update(self.base_data_post)
-        url = 'http://www.shanbay.com/api/v1/forum/post/thread/%s' % topic_id
+        url = Shanbay.url_base_team_reply_topic % topic_id
         response = requests.post(url, data=data, **self.kwargs)
-        topic_url = 'http://www.shanbay.com/team/thread/%s/%s/'
-        topic_url = topic_url % (self.team_id, topic_id)
         logger.debug(response.url)
-        return response.url == topic_url
+        return response.json()['status']['status_code'] == 0
 
     def server_date(self):
         """获取扇贝网服务器时间（北京时间）"""
@@ -235,7 +245,7 @@ class Shanbay(object):
         data.update(self.base_data_post)
         response = requests.post(url, data=data, **self.kwargs)
         logger.debug(response.url)
-        return response.url == 'http://www.shanbay.com/invite/?kind=team'
+        return response.url == 'http://www.shanbay.com/referral/invite/?kind=team'
 
     def team_info(self):
         """小组信息"""
