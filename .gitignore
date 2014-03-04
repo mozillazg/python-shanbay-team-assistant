@@ -21,6 +21,7 @@ lib
 lib64
 __pycache__
 settings.ini
+debug.log
 
 # Installer logs
 pip-log.txt
