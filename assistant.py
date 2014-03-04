@@ -32,6 +32,7 @@ logger.addHandler(fh)
 
 
 def output_member_info(member):
+    """输出组员打卡信息"""
     print((u'{nickname} 组龄: {days} 贡献值成长值：{points} '
            u'打卡率: {rate}% 昨天是否打卡: ' ''.format(**member)
            + (u'是' if member['checked_yesterday'] else u'否')
@@ -56,6 +57,7 @@ def confirm(msg):
 
 
 def render(context, template_name):
+    """渲染模板，返回渲染结果"""
     with open(template_name) as f:
         content = f.read()
         try:
@@ -70,6 +72,7 @@ def retry_shanbay(shanbay_method, ignore=False, catch='exception',
                   *args, **kwargs):
     """重试功能, catch: exception, bool"""
     n = 5
+    # 首先重试5次
     for __ in range(n):
         try:
             result = shanbay_method(*args, **kwargs)
@@ -81,6 +84,7 @@ def retry_shanbay(shanbay_method, ignore=False, catch='exception',
             time.sleep(5)
             pass
     else:
+        # 最后1重试次
         try:
             result = shanbay_method(*args, **kwargs)
             if catch == 'bool':
@@ -94,18 +98,12 @@ def retry_shanbay(shanbay_method, ignore=False, catch='exception',
                 raise Exception(e)
 
 
-def main():
-    username = settings.username or input('Username: ').decode(encoding).strip()
-    password = settings.password or getpass()
-
-    # shanbay = Shanbay(username, password, settings.team_id, settings.team_url)
-    shanbay = retry_shanbay(Shanbay, False, 'exception',
-                            username, password, settings.team_id,
-                            settings.team_url)
-
-    # 判断当前时间
+def check_time(shanbay, settings):
+    """检查是否到了可以查卡的时间"""
+    # 服务器时间
     current_datetime = retry_shanbay(shanbay.server_date, False, 'exception')
     current_time = current_datetime.time()
+    # 查卡时间
     start_time = datetime.datetime.strptime(settings.start_time, '%H:%M').time()
     if current_time < start_time:
         print(u'时间还早者呢，请 {0} 后再操作!'.format(settings.start_time))
@@ -117,23 +115,13 @@ def main():
             else:
                 print(u'设置更新失败')
         sys.exit(0)
+    else:
+        return current_datetime
 
-    # 获取成员信息
+
+def get_all_members(shanbay, max_page):
+    """获取所有成员信息"""
     all_members = []
-    new_members = []       # 新人
-    warnning_members = []  # 警告
-    dismiss_members = []   # 踢人
-    max_page = retry_shanbay(shanbay.max_page, False, 'exception',
-                             shanbay.dismiss_url)
-    # 设置加入条件
-    limit = settings.limit
-
-    if confirm(u'设置小组成员加入条件为：打卡天数>={0} (y/n) '.format(limit)):
-        if retry_shanbay(shanbay.update_limit, False, 'bool', limit):
-            print(u'设置更新成功')
-        else:
-            print(u'设置更新失败')
-    print('')
     for page in range(1, max_page + 1):
         print(u'获取第%s页的所有成员' % page)
         url = '%s?page=%s' % (shanbay.dismiss_url, page)
@@ -146,8 +134,129 @@ def main():
 
     if not settings.confirm:
         print(u'total: %s人' % len(all_members))
-        # for x in all_members:
-        #     print(x)
+    return all_members
+
+
+def check_welcome(shanbay, member, settings):
+    """检查是否是新人"""
+    if eval_bool(member['days'], settings.welcome):
+        if retry_shanbay(shanbay.send_mail, True, 'bool',
+                         [member['username']], settings.welcome_title,
+                         render(member, 'welcome_mail.txt')):
+
+            print(u'欢迎短信已发送')
+        else:
+            print(u'欢迎短信发送失败')
+        return member
+
+
+def check_congratulate(shanbay, member, settings):
+    """恭喜"""
+    for days in settings.congratulate:
+        if member['days'] == days:
+            if retry_shanbay(shanbay.send_mail, True, 'bool',
+                             [member['username']],
+                             settings.congratulate_title,
+                             render(member, 'congratulate_mail.txt')):
+                print(u'恭喜短信已发送')
+            else:
+                print(u'恭喜短信发送失败')
+            return member
+
+
+def check_dismiss(shanbay, member, settings):
+    """踢人"""
+    condition_bool = False
+    # 检查踢人条件
+    for condition in settings.dismiss:
+        days, rate, checked, points = condition.split(':')
+        bool_ = True
+        if days:  # 组龄
+            bool_ = bool_ and eval_bool(member['days'], days)
+        if rate:  # 打卡率
+            bool_ = bool_ and eval_bool(member['rate'], rate)
+        if points:  # 贡献值
+            bool_ = bool_ and eval_bool(member['points'], points)
+        if checked and not int(checked):  # 当天未打卡
+            bool_ = bool_ and (not member['checked'])
+        condition_bool = condition_bool or bool_
+        if condition_bool:
+            break
+
+    if not condition_bool:
+        return
+
+    if confirm(u'是否发送踢人短信并踢人? (y/n) '):
+        if retry_shanbay(shanbay.dismiss, False, 'bool', member['id']):
+            print(u'已执行踢人操作')
+            if retry_shanbay(shanbay.send_mail, True, 'bool',
+                             [member['username']], settings.dismiss_title,
+                             render(member, 'dismiss_mail.txt')):
+
+                print(u'踢人短信已发送')
+            else:
+                print(u'踢人短信发送失败')
+        else:
+            print(u'踢人失败')
+        return member
+
+
+def check_warnning(shanbay, member, settings):
+    """警告"""
+    conditions = settings.warnning.split(':')
+    days, rate, checked, points = conditions
+    condition_bool = True
+    if days:
+        condition_bool = condition_bool and eval_bool(member['days'], days)
+    if rate:
+        condition_bool = condition_bool and eval_bool(member['rate'], rate)
+    if points:
+        condition_bool = condition_bool and eval_bool(member['points'], points)
+    if not int(checked):
+        condition_bool = condition_bool and (not member['checked'])
+    if not condition_bool:
+        return
+
+    if confirm(u'是否发送警告短信? (y/n) '):
+        if retry_shanbay(shanbay.send_mail, True, 'bool',
+                         [member['username']],
+                         settings.warnning_title,
+                         render(member, 'warn_mail.txt')):
+
+            print(u'警告短信已发送')
+        else:
+            print(u'警告短信发送失败')
+        return member
+
+
+def main():
+    # 登录
+    username = settings.username or input('Username: ').decode(encoding).strip()
+    password = settings.password or getpass()
+    shanbay = retry_shanbay(Shanbay, False, 'exception',
+                            username, password, settings.team_id,
+                            settings.team_url)
+
+    # 判断当前时间
+    current_datetime = check_time(shanbay, settings)
+
+    # 获取成员信息
+    new_members = []       # 新人
+    warnning_members = []  # 警告
+    dismiss_members = []   # 踢人
+    max_page = retry_shanbay(shanbay.max_page, False, 'exception',
+                             shanbay.dismiss_url)
+    all_members = get_all_members(shanbay, max_page)
+
+    # 设置加入条件
+    limit = settings.limit
+
+    if confirm(u'设置小组成员加入条件为：打卡天数>={0} (y/n) '.format(limit)):
+        if retry_shanbay(shanbay.update_limit, False, 'bool', limit):
+            print(u'设置更新成功')
+        else:
+            print(u'设置更新失败')
+    print('')
 
     # 对所有成员进行操作
     print(u'开始对所有成员进行处理')
@@ -155,82 +264,21 @@ def main():
         if member['username'].lower() == username.lower():
             continue
         output_member_info(member)
-        # 新人
-        if eval_bool(member['days'], settings.welcome):
-            if retry_shanbay(shanbay.send_mail, True, 'bool',
-                             [member['username']], settings.welcome_title,
-                             render(member, 'welcome_mail.txt')):
 
-                print(u'欢迎短信已发送')
-            else:
-                print(u'欢迎短信发送失败')
+        # 新人
+        if check_welcome(shanbay, member, settings):
             new_members.append(member)
 
         # 恭喜
-        for days in settings.congratulate:
-            if member['days'] == days:
-                if retry_shanbay(shanbay.send_mail, True, 'bool',
-                                 [member['username']],
-                                 settings.congratulate_title,
-                                 render(member, 'congratulate_mail.txt')):
-                    print(u'恭喜短信已发送')
-                else:
-                    print(u'恭喜短信发送失败')
+        check_congratulate(shanbay, member, settings)
 
         # 踢人
-        condition_bool = False
-        for condition in settings.dismiss:
-            days, rate, checked, points = condition.split(':')
-            bool_ = True
-            if days:
-                bool_ = bool_ and eval_bool(member['days'], days)
-            if rate:
-                bool_ = bool_ and eval_bool(member['rate'], rate)
-            if points:
-                bool_ = bool_ and eval_bool(member['points'], points)
-            if checked and not int(checked):
-                bool_ = bool_ and (not member['checked'])
-            condition_bool = condition_bool or bool_
-        # print condition_bool
-        if condition_bool:
-            if confirm(u'是否发送踢人短信并踢人? (y/n) '):
-                if retry_shanbay(shanbay.dismiss, False, 'bool', member['id']):
-                    print(u'已执行踢人操作')
-                    if retry_shanbay(shanbay.send_mail, True, 'bool',
-                                     [member['username']],
-                                     settings.dismiss_title,
-                                     render(member, 'dismiss_mail.txt')):
+        if check_dismiss(shanbay, member, settings):
+            dismiss_members.append(member)
+            continue
 
-                        print(u'踢人短信已发送')
-                    else:
-                        print(u'踢人短信发送失败')
-                else:
-                    print(u'踢人失败')
-                dismiss_members.append(member)
-        else:
-            # 警告
-            conditions = settings.warnning.split(':')
-            days, rate, checked, points = conditions
-            condition_bool = True
-            if days:
-                condition_bool = condition_bool and eval_bool(member['days'], days)
-            if rate:
-                condition_bool = condition_bool and eval_bool(member['rate'], rate)
-            if points:
-                condition_bool = condition_bool and eval_bool(member['points'], points)
-            if not int(checked):
-                condition_bool = condition_bool and (not member['checked'])
-            if condition_bool:
-                if confirm(u'是否发送警告短信? (y/n) '):
-                    if retry_shanbay(shanbay.send_mail, True, 'bool',
-                                     [member['username']],
-                                     settings.warnning_title,
-                                     render(member, 'warn_mail.txt')):
-
-                        print(u'警告短信已发送')
-                    else:
-                        print(u'警告短信发送失败')
-                warnning_members.append(member)
+        # 警告
+        warnning_members.append(member)
 
     if not settings.confirm:
         # print(u'新人:')
