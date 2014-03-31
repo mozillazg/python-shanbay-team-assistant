@@ -71,7 +71,7 @@ def render(context, template_name):
 def retry_shanbay(shanbay_method, ignore=False, catch='exception',
                   *args, **kwargs):
     """重试功能, catch: exception, bool"""
-    n = 5
+    n = 10
     t = 5
 
     def _exec():
@@ -80,7 +80,7 @@ def retry_shanbay(shanbay_method, ignore=False, catch='exception',
             assert result
         return result
 
-    # 首先重试5次
+    # 首先重试n次
     for __ in range(n):
         try:
             return _exec()
@@ -188,23 +188,7 @@ def _check_condition(conditions):
 
 def check_dismiss(shanbay, member, settings):
     """踢人"""
-    condition_bool = False
-    # 检查踢人条件
-    for condition in settings.dismiss:
-        days, rate, checked, points = condition.split(':')
-        bool_ = True
-        if days:  # 组龄
-            bool_ = bool_ and eval_bool(member['days'], days)
-        if rate:  # 打卡率
-            bool_ = bool_ and eval_bool(member['rate'], rate)
-        if points:  # 贡献值
-            bool_ = bool_ and eval_bool(member['points'], points)
-        if checked and not int(checked):  # 当天未打卡
-            bool_ = bool_ and (not member['checked'])
-        condition_bool = condition_bool or bool_
-        if condition_bool:
-            break
-
+    condition_bool = _check_condition(settings.dismiss)
     if not condition_bool:
         return
 
@@ -225,17 +209,8 @@ def check_dismiss(shanbay, member, settings):
 
 def check_warnning(shanbay, member, settings):
     """警告"""
-    conditions = settings.warnning.split(':')
-    days, rate, checked, points = conditions
-    condition_bool = True
-    if days:
-        condition_bool = condition_bool and eval_bool(member['days'], days)
-    if rate:
-        condition_bool = condition_bool and eval_bool(member['rate'], rate)
-    if points:
-        condition_bool = condition_bool and eval_bool(member['points'], points)
-    if not int(checked):
-        condition_bool = condition_bool and (not member['checked'])
+    condition_bool = _check_condition([x.strip() for x in
+                                       settings.warnning.split(',')])
     if not condition_bool:
         return
 
@@ -303,12 +278,6 @@ def main():
         warnning_members.append(member)
 
     if not settings.confirm:
-        # print(u'新人:')
-        # for x in new_members:
-        #     print(x)
-        # print(u'警告:')
-        # for x in warnning_members:
-        #     print(x)
         print(u'被踢:')
         for x in dismiss_members:
             print(x)
