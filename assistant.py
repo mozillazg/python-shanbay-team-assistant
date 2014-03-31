@@ -72,30 +72,31 @@ def retry_shanbay(shanbay_method, ignore=False, catch='exception',
                   *args, **kwargs):
     """重试功能, catch: exception, bool"""
     n = 5
+    t = 5
+
+    def _exec():
+        result = shanbay_method(*args, **kwargs)
+        if catch == 'bool':
+            assert result
+        return result
+
     # 首先重试5次
     for __ in range(n):
         try:
-            result = shanbay_method(*args, **kwargs)
-            if catch == 'bool':
-                assert result
-            return result
+            return _exec()
             break
         except:
-            time.sleep(5)
-            pass
+            time.sleep(t)
     else:
         # 最后1重试次
         try:
-            result = shanbay_method(*args, **kwargs)
-            if catch == 'bool':
-                assert result
-            return result
+            return _exec()
         except Exception as e:
             if ignore:
                 print(u'exec %s fail' % shanbay_method)
                 return
             else:
-                raise Exception(e)
+                raise
 
 
 def check_time(shanbay, settings):
@@ -162,6 +163,27 @@ def check_congratulate(shanbay, member, settings):
             else:
                 print(u'恭喜短信发送失败')
             return member
+
+
+def _check_condition(conditions):
+    condition_bool = False
+    # 检查是否满足条件
+    for condition in conditions:
+        days, rate, checked, points = condition.split(':')
+        bool_ = True
+        if days:  # 组龄
+            bool_ = bool_ and eval_bool(member['days'], days)
+        if rate:  # 打卡率
+            bool_ = bool_ and eval_bool(member['rate'], rate)
+        if points:  # 贡献值
+            bool_ = bool_ and eval_bool(member['points'], points)
+        if checked and not int(checked):  # 当天未打卡
+            bool_ = bool_ and (not member['checked'])
+        condition_bool = condition_bool or bool_
+        if condition_bool:
+            break
+
+    return condition_bool
 
 
 def check_dismiss(shanbay, member, settings):
