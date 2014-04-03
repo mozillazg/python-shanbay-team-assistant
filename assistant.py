@@ -10,7 +10,9 @@ from string import Template
 import sys
 import time
 
-from src import settings
+from argparse import ArgumentParser
+
+from src.settings import Setting
 from src.shanbay import LoginException
 from src.shanbay import Shanbay
 from src.utils import eval_bool
@@ -30,6 +32,12 @@ formatter = logging.Formatter('%(asctime)s - %(name)s '
 fh.setFormatter(formatter)
 logger.addHandler(fh)
 
+parser = ArgumentParser()
+parser.add_argument('-s', '--settings', dest='settings', help='settings file',
+                    default='settings.ini')
+settings = Setting(parser.parse_args().settings).settings()
+sleep_time = 2
+
 
 def output_member_info(member):
     """输出组员打卡信息"""
@@ -47,7 +55,7 @@ def confirm(msg):
     while True:
         if not settings.confirm:
             print(msg)
-            time.sleep(5)
+            time.sleep(sleep_time)
             return True
         c = input(msg.encode(encoding)).strip().lower()
         if c == 'y':
@@ -71,8 +79,8 @@ def render(context, template_name):
 def retry_shanbay(shanbay_method, ignore=False, catch='exception',
                   *args, **kwargs):
     """重试功能, catch: exception, bool"""
-    n = 10
-    t = 5
+    n = 20
+    t = 3
 
     def _exec():
         result = shanbay_method(*args, **kwargs)
@@ -85,13 +93,15 @@ def retry_shanbay(shanbay_method, ignore=False, catch='exception',
         try:
             return _exec()
             break
-        except:
+        except Exception as e:
+            print(e)
             time.sleep(t)
     else:
         # 最后1重试次
         try:
             return _exec()
         except Exception as e:
+            print(e)
             if ignore:
                 print(u'exec %s fail' % shanbay_method)
                 return
@@ -131,7 +141,7 @@ def get_all_members(shanbay, max_page):
         all_members.extend(members)
         if not settings.confirm:
             print(u'%s人' % len(members))
-        time.sleep(5)
+        time.sleep(sleep_time)
 
     if not settings.confirm:
         print(u'total: %s人' % len(all_members))
@@ -165,7 +175,7 @@ def check_congratulate(shanbay, member, settings):
             return member
 
 
-def _check_condition(conditions):
+def _check_condition(conditions, member):
     condition_bool = False
     # 检查是否满足条件
     for condition in conditions:
@@ -188,7 +198,7 @@ def _check_condition(conditions):
 
 def check_dismiss(shanbay, member, settings):
     """踢人"""
-    condition_bool = _check_condition(settings.dismiss)
+    condition_bool = _check_condition(settings.dismiss, member)
     if not condition_bool:
         return
 
@@ -209,8 +219,7 @@ def check_dismiss(shanbay, member, settings):
 
 def check_warnning(shanbay, member, settings):
     """警告"""
-    condition_bool = _check_condition([x.strip() for x in
-                                       settings.warnning.split(',')])
+    condition_bool = _check_condition(settings.warnning, member)
     if not condition_bool:
         return
 
@@ -287,9 +296,9 @@ def main():
             'today': current_datetime.strftime('%Y-%m-%d'),
             'number': len(dismiss_members)
         }
-        if not settings.confirm:
-            print(context)
         content = render(context, 'dismiss_topic.txt')
+        if not settings.confirm:
+            print(content)
         if retry_shanbay(shanbay.reply_topic, False, 'bool',
                          settings.dismiss_topic_id, content):
             print(u'帖子更新成功')
@@ -298,9 +307,10 @@ def main():
 
     if confirm(u'更新小组数据贴 (y/n) '):
         context = retry_shanbay(shanbay.team_info, False, 'exception')
-        if not settings.confirm:
-            print(context)
+        context['today'] = current_datetime.strftime('%Y-%m-%d')
         content = render(context, 'grow_up_topic.txt')
+        if not settings.confirm:
+            print(content)
         if retry_shanbay(shanbay.reply_topic, False, 'bool',
                          settings.grow_up_topic_id, content):
             print(u'帖子更新成功')
