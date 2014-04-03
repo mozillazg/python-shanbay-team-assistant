@@ -1,3 +1,5 @@
+${today}
+
 排名 ${rank}
 
 成员数 ${number}/${max_number}

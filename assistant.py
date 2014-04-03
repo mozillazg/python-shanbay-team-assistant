@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-__version__ = '0.1.3'
+__version__ = '0.1.4'
 
 import datetime
 from getpass import getpass
@@ -33,7 +33,10 @@ fh.setFormatter(formatter)
 logger.addHandler(fh)
 
 parser = ArgumentParser()
-parser.add_argument('-s', '--settings', dest='settings', help='settings file',
+parser.add_argument('-V', '--version', action='version',
+                    version=__version__)
+parser.add_argument('-s', '--settings',
+                    help='settings file (default: settings.ini)',
                     default='settings.ini')
 settings = Setting(parser.parse_args().settings).settings()
 sleep_time = 2
@@ -289,7 +292,7 @@ def main():
     if not settings.confirm:
         print(u'被踢:')
         for x in dismiss_members:
-            print(x)
+            output_member_info(x)
 
     if confirm(u'更新查卡贴 (y/n)'):
         context = {
