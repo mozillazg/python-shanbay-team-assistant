@@ -35,10 +35,14 @@ logger.addHandler(fh)
 parser = ArgumentParser()
 parser.add_argument('-V', '--version', action='version',
                     version=__version__)
+parser.add_argument('-i', '--interactive', action='store_true',
+                    help='prompt before exec action')
 parser.add_argument('-s', '--settings',
                     help='settings file (default: settings.ini)',
                     default='settings.ini')
-settings = Setting(parser.parse_args().settings).settings()
+args = parser.parse_args()
+settings = Setting(args.settings).settings()
+settings.confirm = args.interactive or settings.confirm
 sleep_time = 2
 
 
