@@ -5,7 +5,7 @@ shanbay team assistant
 
 目前专为 [彪悍的人生无需解释](http://www.shanbay.com/team/detail/3352/) 小组定制。
 
-如要用于其他小组，修改 assistant.py 和模板文件即可。
+如要用于其他小组，修改 settings.ini.example 和模板文件即可。
 
 
 功能
@@ -24,7 +24,10 @@ shanbay team assistant
 
 * 安装依赖: ```pip install -r requirements.txt```
 * 执行
-  ```python
+
+  ```
+  cp settings.ini.example settings.ini
+  # modify settings.ini
   python assistant.py
   python assistant.py -s settings.ini
   python assistant.py -h
