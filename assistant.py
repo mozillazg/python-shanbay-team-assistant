@@ -142,12 +142,10 @@ def get_all_members(shanbay, max_page):
         members = retry_shanbay(shanbay.single_page_members, False,
                                 'exception', url)
         all_members.extend(members)
-        if not settings.confirm:
-            print(u'%s人' % len(members))
+        print(u'%s人' % len(members))
         time.sleep(sleep_time)
 
-    if not settings.confirm:
-        print(u'total: %s人' % len(all_members))
+    print(u'total: %s人' % len(all_members))
     return all_members
 
 
@@ -286,15 +284,15 @@ def main():
             dismiss_members.append(member)
             continue
 
-        # 警告
-        warnning_members.append(member)
+        if check_warnning(shanbay, member, settings):
+            # 警告
+            warnning_members.append(member)
 
-    if not settings.confirm:
-        print(u'被踢:')
-        for x in dismiss_members:
-            output_member_info(x)
+    print(u'\n被踢:')
+    for x in dismiss_members:
+        output_member_info(x)
 
-    if confirm(u'更新查卡贴 (y/n)'):
+    if confirm(u'\n更新查卡贴 (y/n)'):
         context = {
             'today': current_datetime.strftime('%Y-%m-%d'),
             'number': len(dismiss_members)
