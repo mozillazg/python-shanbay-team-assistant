@@ -48,8 +48,8 @@ sleep_time = 2
 
 def output_member_info(member):
     """输出组员打卡信息"""
-    print((u'{nickname} 组龄: {days} 贡献值成长值：{points} '
-           u'打卡率: {rate}% 昨天是否打卡: ' ''.format(**member)
+    print((u'{nickname:<20} 组龄: {days:<4} 贡献值成长值：{points:<5} '
+           u'打卡率: {rate:<2}% 昨天是否打卡: ' ''.format(**member)
            + (u'是' if member['checked_yesterday'] else u'否')
            + u' 今天是否打卡：'
            + (u'是' if member['checked'] else u'否')
@@ -61,7 +61,7 @@ def confirm(msg):
     """提示信息"""
     while True:
         if not settings.confirm:
-            print(msg)
+            print(msg + 'y')
             time.sleep(sleep_time)
             return True
         c = input(msg.encode(encoding)).strip().lower()
@@ -262,19 +262,18 @@ def main():
     # 设置加入条件
     limit = settings.limit
 
-    if confirm(u'设置小组成员加入条件为：打卡天数>={0} (y/n) '.format(limit)):
+    if confirm(u'\n设置小组成员加入条件为：打卡天数>={0} (y/n) '.format(limit)):
         if retry_shanbay(shanbay.update_limit, False, 'bool', limit):
             print(u'设置更新成功')
         else:
             print(u'设置更新失败')
-    print('')
 
     # 对所有成员进行操作
-    print(u'开始对所有成员进行处理')
+    print(u'\n开始对所有成员进行处理')
     for member in all_members:
+        output_member_info(member)
         if member['username'].lower() == username.lower():
             continue
-        output_member_info(member)
 
         # 新人
         if check_welcome(shanbay, member, settings):
@@ -296,7 +295,7 @@ def main():
     for x in dismiss_members:
         output_member_info(x)
 
-    if confirm(u'\n更新查卡贴 (y/n)'):
+    if confirm(u'\n\n更新查卡贴 (y/n)'):
         context = {
             'today': current_datetime.strftime('%Y-%m-%d'),
             'number': len(dismiss_members)
@@ -310,7 +309,7 @@ def main():
         else:
             print(u'帖子更新失败')
 
-    if confirm(u'更新小组数据贴 (y/n) '):
+    if confirm(u'\n\n更新小组数据贴 (y/n) '):
         context = retry_shanbay(shanbay.team_info, False, 'exception')
         context['today'] = current_datetime.strftime('%Y-%m-%d')
         content = render(context, 'grow_up_topic.txt')
@@ -322,8 +321,8 @@ def main():
         else:
             print(u'帖子更新失败')
 
-    if settings.confirm and confirm(u'设置小组成员加入条件为：打卡天数>=%s (y/n) '
-                                    % settings.default_limit):
+    if confirm(u'\n\n设置小组成员加入条件为：打卡天数>=%s (y/n) '
+               % settings.default_limit):
         if retry_shanbay(shanbay.update_limit, False, 'bool',
                          settings.default_limit):
             print(u'设置更新成功')
@@ -342,5 +341,5 @@ if __name__ == '__main__':
         except:
             print(u'程序运行中出现错误了')
             logger.exception('')
-        if confirm(u'退出? (y/n) '):
+        if confirm(u'\n退出? (y/n) '):
             break
