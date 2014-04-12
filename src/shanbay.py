@@ -144,9 +144,11 @@ class Shanbay(object):
         for member_html in members_html.find_all('tr', class_='member'):
             member_url = member_html.find_all('a', class_='nickname'
                                               )[0].attrs['href']
-            mail_url = member_html.find_all('td', class_='operation'
-                                            )[0].find('a').attrs['href']
-            username = mail_url.split('/')[-2]
+            # mail_url = member_html.find_all('td', class_='operation'
+            #                                 )[0].find('a').attrs['href']
+            # username = re.findall(r'r=(.*)$', mail_url)[0]
+            username = member_html.find_all('td', class_='user'
+                                            )[0].find('img').attrs['alt']
 
             member = {
                 'id': self.get_url_id(member_url),
