@@ -189,7 +189,7 @@ class Shanbay(object):
         :param message: 内容
 
         """
-        url = 'http://www.shanbay.com/17mail/compose/'
+        url = 'http://www.shanbay.com/message/compose/'
         recipient = ','.join(recipient_list)
         data = {
             'recipient': recipient,
