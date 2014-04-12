@@ -199,7 +199,7 @@ class Shanbay(object):
         data.update(self.base_data_post)
         response = requests.post(url, data=data, **self.kwargs)
         logger.debug(response.url)
-        return response.url == 'http://www.shanbay.com/17mail/inbox/'
+        return response.url == 'http://www.shanbay.com/message/'
 
     def new_topic(self, title, content):
         """小组发贴"""
