@@ -40,10 +40,17 @@ parser.add_argument('-i', '--interactive', action='store_true',
 parser.add_argument('-s', '--settings',
                     help='settings file (default: settings.ini)',
                     default='settings.ini')
+parser.add_argument('-a', '--announce', required=False,
+                    help='send announcement to all members (an text file)')
+parser.add_argument('-t', '--title', default='announce',
+                    help='announcement title (default: announce)')
+
 args = parser.parse_args()
 settings = Setting(args.settings).settings()
 settings.confirm = args.interactive or settings.confirm
 sleep_time = 2
+announce_file = args.announce
+announce_title = args.title.decode(sys.stdin.encoding)
 
 
 def output_member_info(member):
@@ -86,8 +93,8 @@ def render(context, template_name):
 def retry_shanbay(shanbay_method, ignore=False, catch='exception',
                   *args, **kwargs):
     """重试功能, catch: exception, bool"""
-    n = 20
-    t = 3
+    n = 3
+    t = 1
 
     def _exec():
         result = shanbay_method(*args, **kwargs)
@@ -149,7 +156,7 @@ def get_all_members(shanbay, max_page):
         print(u'%s人' % len(members))
         time.sleep(sleep_time)
 
-    print(u'total: %s人' % len(all_members))
+    print(u'total: %s人\n' % len(all_members))
     return all_members
 
 
@@ -240,6 +247,21 @@ def check_warnning(shanbay, member, settings):
         return member
 
 
+def announce(all_members, shanbay, announce_file, announce_title):
+    """给所有组员发送通知短信"""
+    if not confirm(u'确定要给所有组员发送通知短信？ (y/n)'):
+        sys.exit(0)
+
+    for member in all_members:
+        msg = render(member, announce_file)
+        if retry_shanbay(shanbay.send_mail, True, 'bool',
+                         [member['username']], announce_title, msg):
+            print((u'成功通知 %s' % member['nickname']
+                   ).encode(encoding, 'ignore'))
+        else:
+            print(u'通知发送失败!')
+
+
 def main():
     # 登录
     username = settings.username or input('Username: ').decode(encoding).strip()
@@ -248,8 +270,9 @@ def main():
                             username, password, settings.team_id,
                             settings.team_url)
 
-    # 判断当前时间
-    current_datetime = check_time(shanbay, settings)
+    if not announce_file:
+        # 判断当前时间
+        current_datetime = check_time(shanbay, settings)
 
     # 获取成员信息
     new_members = []       # 新人
@@ -258,6 +281,11 @@ def main():
     max_page = retry_shanbay(shanbay.max_page, False, 'exception',
                              shanbay.dismiss_url)
     all_members = get_all_members(shanbay, max_page)
+
+    # 给全体组员发短信
+    if announce_file:
+        announce(all_members, shanbay, announce_file, announce_title)
+        sys.exit(0)
 
     # 设置加入条件
     limit = settings.limit
