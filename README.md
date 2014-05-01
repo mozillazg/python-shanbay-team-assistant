@@ -1,5 +1,4 @@
-shanbay team assistant
-======================
+# shanbay team assistant
 
 [扇贝网](http://www.shanbay.com) 小组管理助手。
 
@@ -8,28 +7,43 @@ shanbay team assistant
 如要用于其他小组，修改 settings.ini.example 和模板文件即可。
 
 
-功能
-----
+## 功能
 
 * 更新小组成员加入条件
 * 获取所有小组成员的打卡等情况
 * 通过规则判断是否需要执行踢人等操作
-* 发邮件
+* 发站内短信
 * 发帖
+* 发送欢迎、恭喜、警告、踢人站内短信
 * 支持半自动/全自动执行查卡操作
+* 支持发送通知短信（给所有组员群发短信）
 
 
-使用
----
+## 使用
 
-* 安装依赖: ```pip install -r requirements.txt```
-* 执行
+### 安装依赖
+```pip install -r requirements.txt```
 
-  ```
-  cp settings.ini.example settings.ini
-  # modify settings.ini
-  python assistant.py
-  python assistant.py -s settings.ini
-  python assistant.py -h
-  ```
+### 修改配置文件
+将 settings.ini.example 改为 settings.ini，修改其中的配置项。
+
+### 修改模板文件
+修改下列 txt 文件的内容：
+
+* congratulate\_mail.txt
+* dismiss\_topic.txt
+* welcome\_mail.txt
+* dismiss\_mail.txt
+* grow\_up\_topic.txt
+* warn\_mail.txt
+
+### 查卡
+命令行下执行 ```python assistant.py```
+
+可以通过 -s 指定配置文件： ``` python assistant.py -s settings_biaohan.ini```
+
+### 发送通知短信
+命令行下执行 ```python assistant.py  -a announce.txt -t "来自小组的邀请"```
+
+其中 ```announce.txt``` 是通知内容，可以参考目录下的 ```announce.txt```， ```来自小组的邀请``` 是通知的标题。
 
