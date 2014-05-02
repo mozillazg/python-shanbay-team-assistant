@@ -1,5 +1,6 @@
 *.py[cod]
 settings*.ini
+/templates/*.txt
 
 # C extensions
 *.so
@@ -39,3 +40,5 @@ nosetests.xml
 .mr.developer.cfg
 .project
 .pydevproject
+
+/templates/*.txt
