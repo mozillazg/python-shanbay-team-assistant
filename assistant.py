@@ -80,7 +80,7 @@ def confirm(msg):
 
 def render(context, template_name):
     """渲染模板，返回渲染结果"""
-    with open(template_name) as f:
+    with open('templates/' + template_name) as f:
         content = f.read()
         try:
             content = content.decode('utf-8-sig')
