@@ -10,6 +10,8 @@ options = {
         # 'packages': ['lxml'],
         'icon': 'shanbay.ico',
         'include_files': [
+            'README.md',
+            'LICENSE',
             'settings.ini.example',
             'announce.txt',
             'welcome_mail.txt',
