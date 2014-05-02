@@ -10,7 +10,10 @@ options = {
         # 'packages': ['lxml'],
         'icon': 'shanbay.ico',
         'include_files': [
+            'README.md',
+            'LICENSE',
             'settings.ini.example',
+            'announce.txt',
             'welcome_mail.txt',
             'congratulate_mail.txt',
             'warn_mail.txt',
@@ -24,7 +27,7 @@ options = {
 
 setup(
     name='shanbay-team-assistant',
-    version='0.1.4',
+    version='0.1.5',
     description='shanbay.com team assistant',
     options=options,
     executables=[Executable("assistant.py")]
