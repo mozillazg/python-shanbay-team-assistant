@@ -48,7 +48,7 @@ parser.add_argument('-t', '--title', default='announce',
 args = parser.parse_args()
 settings = Setting(args.settings).settings()
 settings.confirm = args.interactive or settings.confirm
-sleep_time = 2
+sleep_time = 1
 announce_file = args.announce
 announce_title = args.title.decode(sys.stdin.encoding)
 
@@ -191,7 +191,13 @@ def _check_condition(conditions, member):
     condition_bool = False
     # 检查是否满足条件
     for condition in conditions:
-        days, rate, checked, points = condition.split(':')
+        checked_yesterday = None
+        check_list = [x.strip() for x in condition.split(':')]
+        try:
+            days, rate, checked, points, checked_yesterday = check_list
+        except ValueError:
+            days, rate, checked, points = check_list
+
         bool_ = True
         if days:  # 组龄
             bool_ = bool_ and eval_bool(member['days'], days)
@@ -199,8 +205,11 @@ def _check_condition(conditions, member):
             bool_ = bool_ and eval_bool(member['rate'], rate)
         if points:  # 贡献值
             bool_ = bool_ and eval_bool(member['points'], points)
-        if checked and not int(checked):  # 当天未打卡
+        if checked and (not int(checked)):  # 当天未打卡
             bool_ = bool_ and (not member['checked'])
+        if checked_yesterday and (not int(checked_yesterday)):  # 昨天未打卡
+            bool_ = bool_ and (not member['checked_yesterday'])
+
         condition_bool = condition_bool or bool_
         if condition_bool:
             break
