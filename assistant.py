@@ -6,6 +6,7 @@ __version__ = '0.1.6.dev'
 import datetime
 from getpass import getpass
 import logging
+from random import choice
 from string import Template
 import sys
 import time
@@ -80,7 +81,8 @@ def confirm(msg):
 
 def render(context, template_name):
     """渲染模板，返回渲染结果"""
-    with open('templates/' + template_name) as f:
+    tpl = choice(template_name)
+    with open(tpl) as f:
         content = f.read()
         try:
             content = content.decode('utf-8-sig')
@@ -165,7 +167,7 @@ def check_welcome(shanbay, member, settings):
     if eval_bool(member['days'], settings.welcome):
         if retry_shanbay(shanbay.send_mail, True, 'bool',
                          [member['username']], settings.welcome_title,
-                         render(member, 'welcome_mail.txt')):
+                         render(member, settings.welcome_templates)):
 
             print(u'欢迎短信已发送')
         else:
@@ -180,7 +182,7 @@ def check_congratulate(shanbay, member, settings):
             if retry_shanbay(shanbay.send_mail, True, 'bool',
                              [member['username']],
                              settings.congratulate_title,
-                             render(member, 'congratulate_mail.txt')):
+                             render(member, settings.congratulate_templates)):
                 print(u'恭喜短信已发送')
             else:
                 print(u'恭喜短信发送失败')
@@ -228,7 +230,7 @@ def check_dismiss(shanbay, member, settings):
             print(u'已执行踢人操作')
             if retry_shanbay(shanbay.send_mail, True, 'bool',
                              [member['username']], settings.dismiss_title,
-                             render(member, 'dismiss_mail.txt')):
+                             render(member, settings.dismiss_templates)):
 
                 print(u'踢人短信已发送')
             else:
@@ -248,7 +250,7 @@ def check_warnning(shanbay, member, settings):
         if retry_shanbay(shanbay.send_mail, True, 'bool',
                          [member['username']],
                          settings.warnning_title,
-                         render(member, 'warn_mail.txt')):
+                         render(member, settings.warnning_templates)):
 
             print(u'警告短信已发送')
         else:
@@ -262,7 +264,7 @@ def announce(all_members, shanbay, announce_file, announce_title):
         sys.exit(0)
 
     for member in all_members:
-        msg = render(member, announce_file)
+        msg = render(member, [announce_file])
         if retry_shanbay(shanbay.send_mail, True, 'bool',
                          [member['username']], announce_title, msg):
             print((u'成功通知 %s' % member['nickname']
@@ -337,7 +339,7 @@ def main():
             'today': current_datetime.strftime('%Y-%m-%d'),
             'number': len(dismiss_members)
         }
-        content = render(context, 'dismiss_topic.txt')
+        content = render(context, ['templates/dismiss_topic.txt'])
         if not settings.confirm:
             print(content)
         if retry_shanbay(shanbay.reply_topic, False, 'bool',
@@ -349,7 +351,7 @@ def main():
     if confirm(u'\n\n更新小组数据贴 (y/n) '):
         context = retry_shanbay(shanbay.team_info, False, 'exception')
         context['today'] = current_datetime.strftime('%Y-%m-%d')
-        content = render(context, 'grow_up_topic.txt')
+        content = render(context, ['templates/grow_up_topic.txt'])
         if not settings.confirm:
             print(content)
         if retry_shanbay(shanbay.reply_topic, False, 'bool',
