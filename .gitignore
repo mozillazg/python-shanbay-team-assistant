@@ -1,5 +1,6 @@
 *.py[cod]
 settings*.ini
+/templates/*/*.txt
 /templates/*.txt
 
 # C extensions
