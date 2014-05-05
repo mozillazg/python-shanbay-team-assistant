@@ -50,8 +50,12 @@ class Setting(object):
         # 小组信息
         team_id = self.get_option('team_id')
         team_url = self.get_option('team_url')
+        
         dismiss_topic_id = self.get_option('dismiss_topic_id')
+        dismiss_topic_template = self.get_option_f('dismiss_topic_template', ['dismiss_topic.txt'])
         grow_up_topic_id = self.get_option('grow_up_topic_id')
+        grow_up_topic_template = self.get_option_f('grow_up_topic_template', ['grow_up_topic.txt'])
+
         # 踢人开始时间, 结束时间自然是 00:00
         start_time = self.get_option('start_time')
 
@@ -62,19 +66,19 @@ class Setting(object):
         # 欢迎     组龄
         welcome = self.get_option('welcome', 0)
         welcome_title = self.get_option('welcome_title')
-        welcome_templates = self.get_option_f('welcome_template', [])
+        welcome_template = self.get_option_f('welcome_template', ['welcome_mail.txt'])
         # 警告     组龄，打卡率， 当天是否打卡(1: 打卡，0: 不限制是否打卡)
         warnning = self.get_option_list('warnning')
         warnning_title = self.get_option_list('warnning_title')
-        warnning_templates = self.get_option_f('warnning_template', [])
+        warnning_template = self.get_option_f('warnning_template', ['warn_mail.txt'])
         # 踢人     组龄，打卡率， 当天是否打卡
         dismiss = self.get_option_list('dismiss')
         dismiss_title = self.get_option('dismiss_title')
-        dismiss_templates = self.get_option_f('dismiss_template', [])
+        dismiss_template = self.get_option_f('dismiss_template', ['dismiss_mail.txt'])
         # 恭喜          组龄
         congratulate = self.get_option_list('congratulate')
         congratulate_title = self.get_option('congratulate_title')
-        congratulate_templates = self.get_option_f('congratulate_template', [])
+        congratulate_template = self.get_option_f('congratulate_template', ['congratulate_mail.txt'])
 
         # 确认
         try:

@@ -167,7 +167,7 @@ def check_welcome(shanbay, member, settings):
     if eval_bool(member['days'], settings.welcome):
         if retry_shanbay(shanbay.send_mail, True, 'bool',
                          [member['username']], settings.welcome_title,
-                         render(member, settings.welcome_templates)):
+                         render(member, settings.welcome_template)):
 
             print(u'欢迎短信已发送')
         else:
@@ -182,7 +182,7 @@ def check_congratulate(shanbay, member, settings):
             if retry_shanbay(shanbay.send_mail, True, 'bool',
                              [member['username']],
                              settings.congratulate_title,
-                             render(member, settings.congratulate_templates)):
+                             render(member, settings.congratulate_template)):
                 print(u'恭喜短信已发送')
             else:
                 print(u'恭喜短信发送失败')
@@ -230,7 +230,7 @@ def check_dismiss(shanbay, member, settings):
             print(u'已执行踢人操作')
             if retry_shanbay(shanbay.send_mail, True, 'bool',
                              [member['username']], settings.dismiss_title,
-                             render(member, settings.dismiss_templates)):
+                             render(member, settings.dismiss_template)):
 
                 print(u'踢人短信已发送')
             else:
@@ -250,7 +250,7 @@ def check_warnning(shanbay, member, settings):
         if retry_shanbay(shanbay.send_mail, True, 'bool',
                          [member['username']],
                          settings.warnning_title,
-                         render(member, settings.warnning_templates)):
+                         render(member, settings.warnning_template)):
 
             print(u'警告短信已发送')
         else:
@@ -339,7 +339,7 @@ def main():
             'today': current_datetime.strftime('%Y-%m-%d'),
             'number': len(dismiss_members)
         }
-        content = render(context, ['templates/dismiss_topic.txt'])
+        content = render(context, settings.dismiss_topic_template)
         if not settings.confirm:
             print(content)
         if retry_shanbay(shanbay.reply_topic, False, 'bool',
@@ -351,7 +351,7 @@ def main():
     if confirm(u'\n\n更新小组数据贴 (y/n) '):
         context = retry_shanbay(shanbay.team_info, False, 'exception')
         context['today'] = current_datetime.strftime('%Y-%m-%d')
-        content = render(context, ['templates/grow_up_topic.txt'])
+        content = render(context, settings.grow_up_topic_template)
         if not settings.confirm:
             print(content)
         if retry_shanbay(shanbay.reply_topic, False, 'bool',
