@@ -13,7 +13,7 @@ import time
 
 from argparse import ArgumentParser
 
-from src.settings import Setting
+from src.conf import Setting
 from src.shanbay import LoginException
 from src.shanbay import Shanbay
 from src.utils import eval_bool
