@@ -33,25 +33,34 @@ formatter = logging.Formatter('%(asctime)s - %(name)s '
 fh.setFormatter(formatter)
 logger.addHandler(fh)
 
-parser = ArgumentParser()
-parser.add_argument('-V', '--version', action='version',
-                    version=__version__)
-parser.add_argument('-i', '--interactive', action='store_true',
-                    help='prompt before exec action')
-parser.add_argument('-s', '--settings',
-                    help='settings file (default: settings.ini)',
-                    default='settings.ini')
-parser.add_argument('-a', '--announce', required=False,
-                    help='send announcement to all members (an text file)')
-parser.add_argument('-t', '--title', default='announce',
-                    help='announcement title (default: announce)')
-
-args = parser.parse_args()
-settings = Setting(args.settings).settings()
-settings.confirm = args.interactive or settings.confirm
 sleep_time = 1
-announce_file = args.announce
-announce_title = args.title.decode(sys.stdin.encoding)
+settings = None
+
+
+def parse_conf():
+    parser = ArgumentParser()
+    parser.add_argument('-V', '--version', action='version',
+                        version=__version__)
+    parser.add_argument('-i', '--interactive', action='store_true',
+                        help='prompt before exec action')
+    parser.add_argument('-s', '--settings',
+                        help='settings file (default: settings.ini)',
+                        default='settings.ini')
+    parser.add_argument('-a', '--announce', required=False,
+                        help='send announcement to all members (an text file)')
+    parser.add_argument('-t', '--title', default='announce',
+                        help='announcement title (default: announce)')
+
+    args = parser.parse_args()
+    settings = Setting(args.settings).settings()
+    settings.confirm = args.interactive or settings.confirm
+    announce_file = args.announce
+    announce_title = args.title.decode(sys.stdin.encoding)
+    return {
+        'settings': settings,
+        'announce_file': announce_file,
+        'announce_title': announce_title
+    }
 
 
 def output_member_info(member):
@@ -87,7 +96,10 @@ def render(context, template_name):
         try:
             content = content.decode('utf-8-sig')
         except UnicodeDecodeError:
-            content = content.decode('gbk', 'ignore')
+            try:
+                content = content.decode('utf_16')
+            except UnicodeDecodeError:
+                content = content.decode('gbk', 'ignore')
         result = Template(content).substitute(context)
     return result
 
@@ -158,7 +170,7 @@ def get_all_members(shanbay, max_page):
         print(u'%s人' % len(members))
         time.sleep(sleep_time)
 
-    print(u'total: %s人\n' % len(all_members))
+    print(u'total: %s人' % len(all_members))
     return all_members
 
 
@@ -274,6 +286,12 @@ def announce(all_members, shanbay, announce_file, announce_title):
 
 
 def main():
+    conf = parse_conf()
+    global settings
+    settings = conf['settings']
+    announce_file = conf['announce_file']
+    announce_title = conf['announce_title']
+
     # 登录
     username = settings.username or input('Username: ').decode(encoding).strip()
     password = settings.password or getpass()
@@ -373,12 +391,10 @@ if __name__ == '__main__':
     while True:
         try:
             main()
-        except SystemExit:
-            pass
         except LoginException:
             print(u'登录失败')
-        except:
-            print(u'程序运行中出现错误了')
+        except Exception as e:
+            print(u'程序运行中出现错误了: %s' % e)
             logger.exception('')
         if confirm(u'\n退出? (y/n) '):
             break
