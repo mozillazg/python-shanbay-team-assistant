@@ -1,7 +1,12 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
+"""扇贝网小组管理助手"""
+
 __version__ = '0.1.6.dev'
+__author__ = 'mozillazg'
+__license__ = 'MIT'
+__copyright__ = 'Copyright (c) 2014 mozillazg'
 
 import datetime
 from getpass import getpass
@@ -14,8 +19,8 @@ import time
 from argparse import ArgumentParser
 from shanbay import Shanbay, AuthException
 
-from src.conf import Setting
-from src.utils import eval_bool
+from conf import Setting
+from utils import eval_bool, _decode
 
 try:
     input = raw_input
@@ -96,14 +101,7 @@ def render(context, template_name):
     """渲染模板，返回渲染结果"""
     tpl = choice(template_name)
     with open(tpl) as f:
-        content = f.read()
-        try:
-            content = content.decode('utf-8-sig')
-        except UnicodeDecodeError:
-            try:
-                content = content.decode('utf_16')
-            except UnicodeDecodeError:
-                content = content.decode('gbk', 'ignore')
+        content = _decode(f.read())
         result = Template(content).substitute(context)
     return result
 
@@ -359,7 +357,7 @@ def main():
     for x in dismiss_members:
         output_member_info(x)
 
-    if confirm(u'\n\n更新查卡贴 (y/n)'):
+    if confirm(u'\n更新查卡贴 (y/n)'):
         context = {
             'today': current_datetime.strftime('%Y-%m-%d'),
             'number': len(dismiss_members)
@@ -373,7 +371,7 @@ def main():
         else:
             print(u'帖子更新失败')
 
-    if confirm(u'\n\n更新小组数据贴 (y/n) '):
+    if confirm(u'\n更新小组数据贴 (y/n) '):
         context = retry_shanbay(lambda: team.info, False, 'exception')
         context['today'] = current_datetime.strftime('%Y-%m-%d')
         content = render(context, settings.grow_up_topic_template)
@@ -385,7 +383,7 @@ def main():
         else:
             print(u'帖子更新失败')
 
-    if confirm(u'\n\n设置小组成员加入条件为：打卡天数>=%s (y/n) '
+    if confirm(u'\n设置小组成员加入条件为：打卡天数>=%s (y/n) '
                % settings.default_limit):
         if retry_shanbay(team.update_limit, False, 'bool',
                          settings.default_limit):
@@ -394,7 +392,7 @@ def main():
             print(u'设置更新失败')
 
 if __name__ == '__main__':
-    print(u'版本：%s' % __version__)
+    print(u'版本：%s\n' % __version__)
     while True:
         try:
             main()
@@ -408,3 +406,4 @@ if __name__ == '__main__':
             sys.exit(e)
         if confirm(u'\n退出? (y/n) '):
             break
+        print('\n')
