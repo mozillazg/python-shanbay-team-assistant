@@ -76,7 +76,7 @@ class Setting(object):
         dismiss_title = self.get_option('dismiss_title')
         dismiss_template = self.get_option_f('dismiss_template', ['dismiss_mail.txt'])
         # 恭喜          组龄
-        congratulate = self.get_option_list('congratulate')
+        congratulate = map(int, self.get_option_list('congratulate'))
         congratulate_title = self.get_option('congratulate_title')
         congratulate_template = self.get_option_f('congratulate_template', ['congratulate_mail.txt'])
 
