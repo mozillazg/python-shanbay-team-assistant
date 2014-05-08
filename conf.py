@@ -59,7 +59,7 @@ class Setting(object):
         default_limit = self._get_option('default_limit')
 
         # 欢迎
-        welcome = self._get_option('welcome', 0)
+        welcome = self._get_option('welcome', '<=0')
         welcome_title = self._get_option('welcome_title')
         welcome_template = self._get_option_f('welcome_template',
                                               ['welcome_mail.txt'])

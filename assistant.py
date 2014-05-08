@@ -115,28 +115,25 @@ def retry_shanbay(shanbay_method, ignore=False, catch='exception',
     def _exec():
         result = shanbay_method(*args, **kwargs)
         if catch == 'bool':
-            assert result
+            assert result, 'exec %s fail' % shanbay_method
         return result
 
     # 首先重试n次
     for __ in range(n):
         try:
             return _exec()
-            break
         except Exception as e:
             print(e)
             time.sleep(t)
-    else:
-        # 最后1重试次
-        try:
-            return _exec()
-        except Exception as e:
-            print(e)
-            if ignore:
-                print(u'exec %s fail' % shanbay_method)
-                return
-            else:
-                raise
+    # 最后重试1次
+    try:
+        return _exec()
+    except Exception as e:
+        print(e)
+        if ignore:
+            return
+        else:
+            raise
 
 
 def check_time():
