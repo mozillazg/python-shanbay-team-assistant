@@ -41,6 +41,8 @@ dismiss_template = templates/dismiss/*.txt
 congratulate=7,30,50,66,77,88,99,100,111,123,150,200,222,234,300,333,345,365,400,456,500,567,600,666,700,777,789,800,888,900,999,1000,1111,1234,1200,1300,1400,1500,1600,1700,1800,1900,2000
 congratulate_title = 恭喜恭喜
 congratulate_template = templates/congratulate/*.txt
+; 按一一对应的顺序使用恭喜短信模板, 不够用时随机选取一个(1: 启用，0: 禁用)
+template_order = 0
 
 ; 是否提示确认( 1：提示，0: 不提示（自动执行））
 confirm = 1

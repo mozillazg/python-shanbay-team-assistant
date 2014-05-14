@@ -36,6 +36,20 @@ class Setting(object):
         file_path = self._get_option(key, default)
         return glob(file_path)
 
+    def _get_option_bool(self, key, default):
+        try:
+            return bool(int(self._get_option(key, default)))
+        except:
+            return default
+
+    def _get_option_multi_line(self, key, default):
+        s = self._get_option(key, default)
+        return s.split()
+
+    def _get_option_multi_line_f(self, key, default):
+        lst = self._get_option_multi_line(key, default)
+        return reduce(lambda x, y: x + y, map(glob, lst))
+
     def settings(self):
         username = self._get_option('username')
         password = self._get_option('password')
@@ -76,14 +90,12 @@ class Setting(object):
         # 恭喜
         congratulate = map(int, self._get_option_list('congratulate'))
         congratulate_title = self._get_option('congratulate_title')
-        congratulate_template = self._get_option_f('congratulate_template',
-                                                   ['congratulate_mail.txt'])
+        congratulate_template = self._get_option_multi_line_f('congratulate_template',
+                                                              ['congratulate_mail.txt'])
+        template_order = self._get_option_bool('template_order', False)
 
-        # 确认
-        try:
-            confirm = bool(int(self._get_option('confirm', True)))
-        except:
-            confirm = True
+        # 询问
+        confirm = self._get_option_bool('confirm', True)
 
         d = locals()
         d.pop('self')
