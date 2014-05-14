@@ -187,12 +187,16 @@ def check_welcome(member, settings):
 
 def check_congratulate(member, settings):
     """恭喜"""
-    for days in settings.congratulate:
+    for n, days in enumerate(settings.congratulate):
         if member['days'] == days:
-            if retry_shanbay(message, True, 'bool',
-                             [member['username']],
+            tmps = settings.congratulate_template
+            # 不同的天数使用不同的模板
+            if settings.template_order:
+                tmps = [tmps[n]] if len(tmps) > n else tmps
+
+            if retry_shanbay(message, True, 'bool', [member['username']],
                              settings.congratulate_title,
-                             render(member, settings.congratulate_template)):
+                             render(member, tmps)):
                 print(u'恭喜短信已发送')
             else:
                 print(u'恭喜短信发送失败')
