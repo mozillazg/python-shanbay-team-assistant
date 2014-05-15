@@ -7,15 +7,7 @@ import ConfigParser
 from glob import glob
 from StringIO import StringIO
 
-from .utils import storage
-
-
-def _decode(string):
-    try:
-        string = string.decode('utf-8-sig')
-    except UnicodeDecodeError:
-        string = string.decode('gbk', 'ignore')
-    return string
+from utils import storage, _decode
 
 
 class Setting(object):
@@ -44,6 +36,20 @@ class Setting(object):
         file_path = self._get_option(key, default)
         return glob(file_path)
 
+    def _get_option_bool(self, key, default):
+        try:
+            return bool(int(self._get_option(key, default)))
+        except:
+            return default
+
+    def _get_option_multi_line(self, key, default):
+        s = self._get_option(key, default)
+        return s.split()
+
+    def _get_option_multi_line_f(self, key, default):
+        lst = self._get_option_multi_line(key, default)
+        return reduce(lambda x, y: x + y, map(glob, lst))
+
     def settings(self):
         username = self._get_option('username')
         password = self._get_option('password')
@@ -67,13 +73,13 @@ class Setting(object):
         default_limit = self._get_option('default_limit')
 
         # 欢迎
-        welcome = self._get_option('welcome', 0)
+        welcome = self._get_option('welcome', '<=0')
         welcome_title = self._get_option('welcome_title')
         welcome_template = self._get_option_f('welcome_template',
                                               ['welcome_mail.txt'])
         # 警告
         warnning = self._get_option_list('warnning')
-        warnning_title = self._get_option_list('warnning_title')
+        warnning_title = self._get_option('warnning_title')
         warnning_template = self._get_option_f('warnning_template',
                                                ['warn_mail.txt'])
         # 踢人
@@ -82,16 +88,14 @@ class Setting(object):
         dismiss_template = self._get_option_f('dismiss_template',
                                               ['dismiss_mail.txt'])
         # 恭喜
-        congratulate = self._get_option_list('congratulate')
+        congratulate = map(int, self._get_option_list('congratulate'))
         congratulate_title = self._get_option('congratulate_title')
-        congratulate_template = self._get_option_f('congratulate_template',
-                                                   ['congratulate_mail.txt'])
+        congratulate_template = self._get_option_multi_line_f('congratulate_template',
+                                                              ['congratulate_mail.txt'])
+        template_order = self._get_option_bool('template_order', False)
 
-        # 确认
-        try:
-            confirm = bool(int(self._get_option('confirm', True)))
-        except:
-            confirm = True
+        # 询问
+        confirm = self._get_option_bool('confirm', True)
 
         d = locals()
         d.pop('self')
