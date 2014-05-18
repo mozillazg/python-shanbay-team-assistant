@@ -9,9 +9,14 @@ team_url = http://www.shanbay.com/team/detail/0000/
 ; 踢人记录帖子
 dismiss_topic_id = 0000
 dismiss_topic_template = templates/dismiss_topic.txt
+; 是否更新踢人记录帖子（1: 是，0: 否）
+update_dismiss_topic = 1
+
 ; 小组信息帖子
 grow_up_topic_id = 0000
 grow_up_topic_template = templates/grow_up_topic.txt
+; 是否更新小组信息帖子（1: 是，0: 否）
+update_grow_up_topic = 1
 
 ; 踢人开始时间
 ; 格式为 hh:mm , 例如：01:01, 21:10

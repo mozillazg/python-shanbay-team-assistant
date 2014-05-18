@@ -61,9 +61,12 @@ class Setting(object):
         dismiss_topic_id = self._get_option('dismiss_topic_id')
         dismiss_topic_template = self._get_option_f('dismiss_topic_template',
                                                     ['dismiss_topic.txt'])
+        update_dismiss_topic = self._get_option_bool('update_dismiss_topic', True)
+
         grow_up_topic_id = self._get_option('grow_up_topic_id')
         grow_up_topic_template = self._get_option_f('grow_up_topic_template',
                                                     ['grow_up_topic.txt'])
+        update_grow_up_topic = self._get_option_bool('update_grow_up_topic', True)
 
         # 踢人开始时间
         start_time = self._get_option('start_time')

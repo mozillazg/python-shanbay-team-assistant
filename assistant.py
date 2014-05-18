@@ -358,7 +358,7 @@ def main():
     for x in dismiss_members:
         output_member_info(x)
 
-    if confirm(u'\n更新查卡贴 (y/n)'):
+    if settings.update_dismiss_topic and confirm(u'\n更新查卡贴 (y/n)'):
         context = {
             'today': current_datetime.strftime('%Y-%m-%d'),
             'number': len(dismiss_members)
@@ -372,7 +372,7 @@ def main():
         else:
             print(u'帖子更新失败')
 
-    if confirm(u'\n更新小组数据贴 (y/n) '):
+    if settings.update_grow_up_topic and confirm(u'\n更新小组数据贴 (y/n) '):
         context = retry_shanbay(lambda: team.info, False, 'exception')
         context['today'] = current_datetime.strftime('%Y-%m-%d')
         content = render(context, settings.grow_up_topic_template)
