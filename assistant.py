@@ -3,7 +3,7 @@
 
 """扇贝网小组管理助手"""
 
-__version__ = '0.1.6.dev'
+__version__ = '0.1.6'
 __author__ = 'mozillazg'
 __license__ = 'MIT'
 __copyright__ = 'Copyright (c) 2014 mozillazg'
