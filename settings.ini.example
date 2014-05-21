@@ -8,14 +8,21 @@ team_url = http://www.shanbay.com/team/detail/0000/
 
 ; 踢人记录帖子
 dismiss_topic_id = 0000
+dismiss_topic_template = templates/dismiss_topic.txt
+; 是否更新踢人记录帖子（1: 是，0: 否）
+update_dismiss_topic = 1
+
 ; 小组信息帖子
 grow_up_topic_id = 0000
+grow_up_topic_template = templates/grow_up_topic.txt
+; 是否更新小组信息帖子（1: 是，0: 否）
+update_grow_up_topic = 1
 
-; 踢人开始时间, 结束时间自然是 00:00
+; 踢人开始时间
 ; 格式为 hh:mm , 例如：01:01, 21:10
 start_time = 23:00
 
-; 成员加入条件（打卡天数>=）
+; 查卡时的成员加入条件（打卡天数>=）
 limit = 10000
 ; 平时的成员加入条件
 default_limit = 3
@@ -23,15 +30,24 @@ default_limit = 3
 ; 欢迎     组龄
 welcome = <=0
 welcome_title = 彪悍小组欢迎你
+welcome_template = templates/welcome/*.txt
+
 ; 警告     组龄:打卡率:当天是否打卡(0: 未打卡，1: 不考虑是否打卡):贡献值:昨天是否打卡
 warnning = >=50:>=99:0::
 warnning_title = 友情提示
+warnning_template = templates/warn/*.txt
+
 ; 踢人     组龄:打卡率:当天是否打卡:贡献值:昨天是否打卡
 dismiss = >50:<99:0::, <50::0:, ==1::0:==0:
 dismiss_title = 非常遗憾
+dismiss_template = templates/dismiss/*.txt
+
 ; 恭喜          组龄
 congratulate=7,30,50,66,77,88,99,100,111,123,150,200,222,234,300,333,345,365,400,456,500,567,600,666,700,777,789,800,888,900,999,1000,1111,1234,1200,1300,1400,1500,1600,1700,1800,1900,2000
 congratulate_title = 恭喜恭喜
+congratulate_template = templates/congratulate/*.txt
+; 按一一对应的顺序使用恭喜短信模板, 不够用时随机选取一个(1: 启用，0: 禁用)
+template_order = 0
 
 ; 是否提示确认( 1：提示，0: 不提示（自动执行））
 confirm = 1

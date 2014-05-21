@@ -26,17 +26,10 @@
 ```pip install -r requirements.txt```
 
 ### 修改配置文件
-将 settings.ini.example 改为 settings.ini，修改其中的配置项。
+复制 settings.ini.example 为 settings.ini，修改其中的配置项。
 
 ### 修改模板文件
-修改下列 txt 文件的内容：
-
-* congratulate\_mail.txt
-* dismiss\_topic.txt
-* welcome\_mail.txt
-* dismiss\_mail.txt
-* grow\_up\_topic.txt
-* warn\_mail.txt
+复制 templates 目录下的 .example 文件为 .txt 文件，并修改 txt 文件的内容。
 
 ### 查卡
 命令行下执行 ```python assistant.py```
@@ -46,5 +39,5 @@
 ### 发送通知短信
 命令行下执行 ```python assistant.py  -a announce.txt -t "来自小组的邀请"```
 
-其中 ```announce.txt``` 是通知内容，可以参考目录下的 ```announce.txt```， ```来自小组的邀请``` 是通知的标题。
+其中 ```announce.txt``` 是通知内容,位于 templates 目录，可以参考目录下的 ```templates/announce.txt.example```， ```来自小组的邀请``` 是通知的标题。
 
