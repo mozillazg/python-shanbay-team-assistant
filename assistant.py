@@ -3,7 +3,7 @@
 
 """扇贝网小组管理助手"""
 
-__version__ = '0.1.6'
+__version__ = '0.1.7.dev'
 __author__ = 'mozillazg'
 __license__ = 'MIT'
 __copyright__ = 'Copyright (c) 2014 mozillazg'
@@ -400,11 +400,10 @@ if __name__ == '__main__':
         except AuthException:
             print(u'登录失败')
         except (EOFError, KeyboardInterrupt):
-            sys.exit(0)
+            pass
         except Exception as e:
             print(u'程序运行中出现错误了: %s' % e)
             logger.exception('')
-            sys.exit(e)
         if confirm(u'\n退出? (y/n) '):
-            break
+            sys.exit(0)
         print('\n')
