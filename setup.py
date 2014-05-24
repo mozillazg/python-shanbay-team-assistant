@@ -1,22 +1,26 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
+from glob import glob
+
 from cx_Freeze import setup, Executable
 
 import assistant
 
 options = {
     'build_exe': {
+        'compressed': True,
+        'optimize': 2,
         # 'init_script': 'Console',
-        'includes': ['lxml'],
+        'packages': ['lxml', 'bs4', 'requests', 'html5lib', 'argparse', 'shanbay'],
         # 'packages': ['lxml'],
         'icon': 'shanbay.ico',
         'include_files': [
             'README.md',
             'LICENSE',
+            'CHANGELOG.md',
             'settings.ini.example',
-            'templates/*.example',
-        ],
+         ] + glob('templates/*.example') + glob('templates/*/*.example'),
         'include_msvcr': True,
     }
 }
