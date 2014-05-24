@@ -39,5 +39,5 @@
 ### 发送通知短信
 命令行下执行 ```python assistant.py  -a announce.txt -t "来自小组的邀请"```
 
-其中 ```announce.txt``` 是通知内容,位于 templates 目录，可以参考目录下的 ```templates/announce.txt.example```， ```来自小组的邀请``` 是通知的标题。
+其中 ```announce.txt``` 是通知内容，可以参考目录下的 ```templates/announce.txt.example```， ```来自小组的邀请``` 是通知的标题。
 
