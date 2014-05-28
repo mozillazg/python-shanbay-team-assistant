@@ -78,17 +78,17 @@ class Setting(object):
         # 欢迎
         welcome = self._get_option('welcome', '<=0')
         welcome_title = self._get_option('welcome_title')
-        welcome_template = self._get_option_f('welcome_template',
+        welcome_template = self._get_option_multi_line_f('welcome_template',
                                               ['welcome_mail.txt'])
         # 警告
         warnning = self._get_option_list('warnning')
         warnning_title = self._get_option('warnning_title')
-        warnning_template = self._get_option_f('warnning_template',
+        warnning_template = self._get_option_multi_line_f('warnning_template',
                                                ['warn_mail.txt'])
         # 踢人
         dismiss = self._get_option_list('dismiss')
         dismiss_title = self._get_option('dismiss_title')
-        dismiss_template = self._get_option_f('dismiss_template',
+        dismiss_template = self._get_option_multi_line_f('dismiss_template',
                                               ['dismiss_mail.txt'])
         # 恭喜
         congratulate = map(int, self._get_option_list('congratulate'))
