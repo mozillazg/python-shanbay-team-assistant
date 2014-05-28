@@ -102,7 +102,11 @@ def render(context, template_name):
     tpl = choice(template_name)
     with open(tpl) as f:
         content = _decode(f.read())
-        result = Template(content).substitute(context)
+        try:
+            result = Template(content).substitute(context)
+        except ValueError:
+            print(u'模板文件 (%s) 内容格式错误!' % tpl)
+            result = Template(content).safe_substitute(context)
     return result
 
 
