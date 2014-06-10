@@ -1,2 +1,2 @@
 argparse
-shanbay==0.1.1.dev
+shanbay==0.2.0

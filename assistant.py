@@ -17,7 +17,7 @@ import sys
 import time
 
 from argparse import ArgumentParser
-from shanbay import Shanbay, AuthException
+from shanbay import Shanbay, AuthException, Team, Message
 
 from conf import Setting
 from utils import eval_bool, _decode
@@ -143,7 +143,7 @@ def retry_shanbay(shanbay_method, ignore=False, catch='exception',
 def check_time():
     """检查是否到了可以查卡的时间"""
     # 服务器时间
-    current_datetime = retry_shanbay(lambda: shanbay.server_date, False, 'exception')
+    current_datetime = retry_shanbay(shanbay.server_date, False, 'exception')
     current_time = current_datetime.time()
     # 查卡时间
     start_time = datetime.datetime.strptime(settings.start_time, '%H:%M').time()
@@ -307,8 +307,8 @@ def main():
     password = settings.password or getpass()
     shanbay = retry_shanbay(Shanbay, False, 'exception', username, password)
     retry_shanbay(shanbay.login, False, 'exception')
-    team = shanbay.team(settings.team_url)
-    message = shanbay.message
+    team = Team(shanbay, settings.team_url)
+    message = Message(shanbay).send_message
 
     if not announce_file:
         # 判断当前时间
@@ -318,7 +318,7 @@ def main():
     new_members = []       # 新人
     warnning_members = []  # 警告
     dismiss_members = []   # 踢人
-    max_page = retry_shanbay(lambda: team.max_page, False, 'exception')
+    max_page = retry_shanbay(team.max_page, False, 'exception')
     all_members = get_all_members(max_page)
 
     # 给全体组员发短信
@@ -338,7 +338,9 @@ def main():
     # 对所有成员进行操作
     print(u'\n开始对所有成员进行处理')
     for member in all_members:
+        time.sleep(sleep_time)
         output_member_info(member)
+        # 别把自己给踢人
         if member['username'].lower() == username.lower():
             continue
 
@@ -354,8 +356,8 @@ def main():
             dismiss_members.append(member)
             continue
 
+        # 警告
         if check_warnning(member, settings):
-            # 警告
             warnning_members.append(member)
 
     print(u'\n被踢:')
@@ -377,7 +379,7 @@ def main():
             print(u'帖子更新失败')
 
     if settings.update_grow_up_topic and confirm(u'\n更新小组数据贴 (y/n) '):
-        context = retry_shanbay(lambda: team.info, False, 'exception')
+        context = retry_shanbay(team.info, False, 'exception')
         context['today'] = current_datetime.strftime('%Y-%m-%d')
         content = render(context, settings.grow_up_topic_template)
         if not settings.confirm:
