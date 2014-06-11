@@ -4,10 +4,13 @@
 from __future__ import unicode_literals
 
 import ConfigParser
-from glob import glob
+from glob import glob as _glob
+from os.path import realpath
 from StringIO import StringIO
 
 from utils import storage, _decode
+
+glob = lambda f: map(realpath, _glob(f))
 
 
 class Setting(object):
@@ -79,17 +82,17 @@ class Setting(object):
         welcome = self._get_option('welcome', '<=0')
         welcome_title = self._get_option('welcome_title')
         welcome_template = self._get_option_multi_line_f('welcome_template',
-                                              ['welcome_mail.txt'])
+                                                         ['welcome_mail.txt'])
         # 警告
         warnning = self._get_option_list('warnning')
         warnning_title = self._get_option('warnning_title')
         warnning_template = self._get_option_multi_line_f('warnning_template',
-                                               ['warn_mail.txt'])
+                                                          ['warn_mail.txt'])
         # 踢人
         dismiss = self._get_option_list('dismiss')
         dismiss_title = self._get_option('dismiss_title')
         dismiss_template = self._get_option_multi_line_f('dismiss_template',
-                                              ['dismiss_mail.txt'])
+                                                         ['dismiss_mail.txt'])
         # 恭喜
         congratulate = map(int, self._get_option_list('congratulate'))
         congratulate_title = self._get_option('congratulate_title')

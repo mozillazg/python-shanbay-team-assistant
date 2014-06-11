@@ -11,8 +11,6 @@ __copyright__ = 'Copyright (c) 2014 mozillazg'
 import datetime
 from getpass import getpass
 import logging
-from random import choice
-from string import Template
 import sys
 import time
 
@@ -20,7 +18,7 @@ from argparse import ArgumentParser
 from shanbay import Shanbay, AuthException, Team, Message
 
 from conf import Setting
-from utils import eval_bool, _decode
+from utils import eval_bool, render
 
 try:
     input = raw_input
@@ -62,7 +60,7 @@ def parse_conf():
     settings = Setting(args.settings).settings()
     settings.confirm = args.interactive or settings.confirm
     announce_file = args.announce
-    announce_title = args.title.decode(sys.stdin.encoding)
+    announce_title = args.title.decode(encoding)
     return {
         'settings': settings,
         'announce_file': announce_file,
@@ -95,19 +93,6 @@ def confirm(msg):
             return True
         elif c == 'n':
             return False
-
-
-def render(context, template_name):
-    """渲染模板，返回渲染结果"""
-    tpl = choice(template_name)
-    with open(tpl) as f:
-        content = _decode(f.read())
-        try:
-            result = Template(content).substitute(context)
-        except ValueError:
-            print(u'模板文件 (%s) 内容格式错误!' % tpl)
-            result = Template(content).safe_substitute(context)
-    return result
 
 
 def retry_shanbay(shanbay_method, ignore=False, catch='exception',

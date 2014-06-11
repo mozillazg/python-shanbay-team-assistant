@@ -1,6 +1,10 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
+from random import choice
+from string import Template
+
+
 def _decode(string):
     try:
         string = string.decode('utf-8-sig')
@@ -12,8 +16,27 @@ def _decode(string):
     return string
 
 
+def render(context, template_name):
+    """渲染模板，返回渲染结果
+
+    :param context: 模板内使用的变量
+    :type context: dict
+    :template_name: 模板文件路径列表,
+                    从列表中随机选择一个文件进行渲染
+    """
+    tpl = choice(template_name)
+    with open(tpl) as f:
+        content = _decode(f.read())
+        try:
+            result = Template(content).substitute(context)
+        except ValueError:
+            print(u'模板文件 (%s) 内容格式错误!' % tpl)
+            result = Template(content).safe_substitute(context)
+    return result
+
+
 def eval_bool(*args):
-    """ 执行包含布尔操作的字符串 """
+    """执行包含布尔操作的字符串"""
     return eval('%s' % (' '.join(map(str, args))), {}, {})
 
 
