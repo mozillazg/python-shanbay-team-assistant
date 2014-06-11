@@ -17,22 +17,25 @@ def _decode(string):
     return string
 
 
-def render(context, template_name):
+def render(context, templates):
     """渲染模板，返回渲染结果
 
     :param context: 模板内使用的变量
     :type context: dict
-    :template_name: 模板文件路径列表,
-                    从列表中随机选择一个文件进行渲染
+    :templates: 模板文件路径列表(从列表中随机选择一个文件进行渲染)
+                或模板内容字符串
     """
-    tpl = choice(template_name)
-    with open(tpl) as f:
-        content = _decode(f.read())
-        try:
-            result = Template(content).substitute(context)
-        except ValueError:
-            print(u'模板文件 (%s) 内容格式错误!' % tpl)
-            result = Template(content).safe_substitute(context)
+    if isinstance(templates, basestring):
+        content = templates
+    else:
+        tpl = choice(templates)
+        with open(tpl) as f:
+            content = _decode(f.read())
+    try:
+        result = Template(content).substitute(context)
+    except ValueError:
+        print(u'模板文件 (%s) 内容格式错误!' % tpl)
+        result = Template(content).safe_substitute(context)
     return result
 
 
@@ -44,7 +47,7 @@ class Retry(object):
         self.sleep_time = sleep_time
 
     def __call__(self, func, *args, **kwargs):
-        _exec = lambda f: f(*args, **kwargs)
+        _exec = lambda: func(*args, **kwargs)
 
         # 首先重试 n-1 次
         for __ in range(self.tries - 1):
