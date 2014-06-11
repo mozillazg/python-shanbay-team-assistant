@@ -18,28 +18,128 @@ from argparse import ArgumentParser
 from shanbay import Shanbay, AuthException, Team, Message
 
 from conf import Setting
-from utils import eval_bool, render
+from utils import eval_bool, render, Retry
 
 try:
     input = raw_input
 except NameError:
     pass
 encoding = sys.stdin.encoding
-
 logger = logging.getLogger(__name__)
-logger.setLevel(logging.DEBUG)
-fh = logging.FileHandler('debug.log')
-formatter = logging.Formatter('%(asctime)s - %(name)s '
-                              '- %(funcName)s - %(lineno)d - %(levelname)s -'
-                              ' %(message)s')
-fh.setFormatter(formatter)
-logger.addHandler(fh)
 
-sleep_time = 1
-settings = None
-shanbay = None
-team = None
-message = None
+
+class Assistant(object):
+    def __init__(self, settings, sleep_time=1):
+        self.settings = settings
+        self.sleep_time = sleep_time
+        self.username = settings.username
+        self.shanbay = Retry()(Shanbay, self.username, settings.password)
+        Retry()(self.shanbay.login)
+        self.team = Team(self.shanbay, settings.team_url)
+        self.message = Message(self.shanbay)
+
+    def confirm(self, msg):
+        """提示信息"""
+        for __ in range(30):
+            if not self.settings.confirm:
+                print(msg + ' y')
+                time.sleep(self.sleep_time)
+                return True
+            c = input(msg.encode(encoding)).strip().lower()
+            if c == 'y':
+                return True
+            elif c == 'n':
+                return False
+
+    def output_member_info(self, member):
+        """输出组员信息"""
+        print((u'用户名: {username:<10} 昵称: {nickname:<20} 组龄: {days:<5}'
+               u' 贡献值成长值：{points:<8}'.format(**member)
+               + u' 打卡率: {rate}%'.format(**member).ljust(15)
+               + u' 昨天是否打卡: '
+               + (u'是' if member['checked_yesterday'] else u'否')
+               + u'    今天是否打卡：'
+               + (u'是' if member['checked'] else u'否')
+               ).encode(encoding, 'ignore')
+              )
+
+    def update_limit(self, days):
+        if confirm(u'设置小组成员加入条件为：打卡天数>=%s (y/n) ' % days):
+            if retry(self.team.update_limit, days):
+                print(u'设置更新成功')
+            else:
+                print(u'设置更新失败')
+
+    def check_time(self):
+        """检查是否到了可以查卡的时间"""
+        retry = Retry()
+        # 服务器时间
+        current_datetime = retry(self.shanbay.server_date)
+        current_time = current_datetime.time()
+        # 查卡时间
+        start_time = datetime.datetime.strptime(self.settings.start_time, '%H:%M').time()
+        if current_time > start_time:
+            return current_datetime
+        else:
+            print(u'时间还早者呢，请 {0} 后再操作!'.format(self.settings.start_time))
+            self.update_limit(self.settings.default_limit)
+
+    def get_all_members(self, max_page):
+        """获取所有成员信息"""
+        all_members = []
+        for page in range(1, max_page + 1):
+            print(u'获取第%s页的所有成员' % page)
+            members = Retry()(self.team.single_page_members, page)
+            all_members.extend(members)
+            print(u'%s人' % len(members))
+            time.sleep(self.sleep_time)
+
+        print(u'total: %s人' % len(all_members))
+        self.members = all_members
+        return all_members
+
+    def check_welcome(self, member):
+        """检查是否是新人"""
+        if eval_bool(member['days'], self.settings.welcome):
+            if Retry(ignore_error=True)(self.message, [member['username']],
+                                        self.settings.welcome_title,
+                                        render(member, self.settings.welcome_template)):
+
+                print(u'欢迎短信已发送')
+            else:
+                print(u'欢迎短信发送失败')
+            return member
+
+    def check_congratulate(self, member):
+        """恭喜"""
+        for n, days in enumerate(self.settings.congratulate):
+            if member['days'] == days:
+                tmps = self.settings.congratulate_template
+                # 不同的天数使用不同的模板
+                if self.settings.template_order:
+                    tmps = [tmps[n]] if len(tmps) > n else tmps
+
+                if Retry(ignore_error=True)(self.message, [member['username']],
+                                            self.settings.congratulate_title,
+                                            render(member, tmps)):
+                    print(u'恭喜短信已发送')
+                else:
+                    print(u'恭喜短信发送失败')
+                return member
+
+    def announce(self):
+        """给所有组员发送通知短信"""
+        if not confirm(u'确定要给所有组员发送通知短信？ (y/n)'):
+            return
+
+        for member in self.members:
+            msg = render(member, [self.settings.announce_file])
+            if Retry(ignore_error=True)(self.message, [member['username']],
+                                        self.settings.announce_title, msg):
+                print((u'成功通知 %s' % member['nickname']
+                       ).encode(encoding, 'ignore'))
+            else:
+                print(u'通知发送失败!')
 
 
 def parse_conf():
@@ -59,137 +159,9 @@ def parse_conf():
     args = parser.parse_args()
     settings = Setting(args.settings).settings()
     settings.confirm = args.interactive or settings.confirm
-    announce_file = args.announce
-    announce_title = args.title.decode(encoding)
-    return {
-        'settings': settings,
-        'announce_file': announce_file,
-        'announce_title': announce_title
-    }
-
-
-def output_member_info(member):
-    """输出组员信息"""
-    print((u'用户名: {username:<10} 昵称: {nickname:<20} 组龄: {days:<5}'
-           u' 贡献值成长值：{points:<8}'.format(**member)
-           + u' 打卡率: {rate}%'.format(**member).ljust(15)
-           + u' 昨天是否打卡: '
-           + (u'是' if member['checked_yesterday'] else u'否')
-           + u'    今天是否打卡：'
-           + (u'是' if member['checked'] else u'否')
-           ).encode(encoding, 'ignore')
-          )
-
-
-def confirm(msg):
-    """提示信息"""
-    while True:
-        if not settings.confirm:
-            print(msg + 'y')
-            time.sleep(sleep_time)
-            return True
-        c = input(msg.encode(encoding)).strip().lower()
-        if c == 'y':
-            return True
-        elif c == 'n':
-            return False
-
-
-def retry_shanbay(shanbay_method, ignore=False, catch='exception',
-                  *args, **kwargs):
-    """重试功能, catch: exception, bool"""
-    n = 3
-    t = 1
-
-    def _exec():
-        result = shanbay_method(*args, **kwargs)
-        if catch == 'bool':
-            assert result, 'exec %s fail' % shanbay_method
-        return result
-
-    # 首先重试n次
-    for __ in range(n):
-        try:
-            return _exec()
-        except Exception as e:
-            print(e)
-            time.sleep(t)
-    # 最后重试1次
-    try:
-        return _exec()
-    except Exception as e:
-        print(e)
-        if ignore:
-            return
-        else:
-            raise
-
-
-def check_time():
-    """检查是否到了可以查卡的时间"""
-    # 服务器时间
-    current_datetime = retry_shanbay(shanbay.server_date, False, 'exception')
-    current_time = current_datetime.time()
-    # 查卡时间
-    start_time = datetime.datetime.strptime(settings.start_time, '%H:%M').time()
-    if current_time < start_time:
-        print(u'时间还早者呢，请 {0} 后再操作!'.format(settings.start_time))
-        if confirm(u'设置小组成员加入条件为：打卡天数>=%s (y/n) ' %
-                   settings.default_limit):
-            if retry_shanbay(team.update_limit, False, 'bool',
-                             settings.default_limit):
-                print(u'设置更新成功')
-            else:
-                print(u'设置更新失败')
-        sys.exit(0)
-    else:
-        return current_datetime
-
-
-def get_all_members(max_page):
-    """获取所有成员信息"""
-    all_members = []
-    for page in range(1, max_page + 1):
-        print(u'获取第%s页的所有成员' % page)
-        members = retry_shanbay(team.single_page_members, False,
-                                'exception', page)
-        all_members.extend(members)
-        print(u'%s人' % len(members))
-        time.sleep(sleep_time)
-
-    print(u'total: %s人' % len(all_members))
-    return all_members
-
-
-def check_welcome(member, settings):
-    """检查是否是新人"""
-    if eval_bool(member['days'], settings.welcome):
-        if retry_shanbay(message, True, 'bool',
-                         [member['username']], settings.welcome_title,
-                         render(member, settings.welcome_template)):
-
-            print(u'欢迎短信已发送')
-        else:
-            print(u'欢迎短信发送失败')
-        return member
-
-
-def check_congratulate(member, settings):
-    """恭喜"""
-    for n, days in enumerate(settings.congratulate):
-        if member['days'] == days:
-            tmps = settings.congratulate_template
-            # 不同的天数使用不同的模板
-            if settings.template_order:
-                tmps = [tmps[n]] if len(tmps) > n else tmps
-
-            if retry_shanbay(message, True, 'bool', [member['username']],
-                             settings.congratulate_title,
-                             render(member, tmps)):
-                print(u'恭喜短信已发送')
-            else:
-                print(u'恭喜短信发送失败')
-            return member
+    settings.announce_file = args.announce
+    settings.announce_title = args.title.decode(encoding)
+    return settings
 
 
 def _check_condition(conditions, member):
@@ -229,18 +201,18 @@ def check_dismiss(member, settings):
         return
 
     if confirm(u'是否踢人并发送踢人短信? (y/n) '):
-        if retry_shanbay(team.dismiss, False, 'bool', member['id']):
+        if Retry(ignore_error=True)(team.dismiss, member['id']):
             print(u'已执行踢人操作')
-            if retry_shanbay(message, True, 'bool',
-                             [member['username']], settings.dismiss_title,
-                             render(member, settings.dismiss_template)):
+            if Retry(ignore_error=True)(message, [member['username']],
+                                        settings.dismiss_title,
+                                        render(member, settings.dismiss_template)):
 
                 print(u'踢人短信已发送')
             else:
                 print(u'踢人短信发送失败')
+            return member
         else:
             print(u'踢人失败')
-        return member
 
 
 def check_warnning(member, settings):
@@ -250,10 +222,9 @@ def check_warnning(member, settings):
         return
 
     if confirm(u'是否发送警告短信? (y/n) '):
-        if retry_shanbay(message, True, 'bool',
-                         [member['username']],
-                         settings.warnning_title,
-                         render(member, settings.warnning_template)):
+        if Retry(ignore_error=True)(message, [member['username']],
+                                    settings.warnning_title,
+                                    render(member, settings.warnning_template)):
 
             print(u'警告短信已发送')
         else:
@@ -261,41 +232,14 @@ def check_warnning(member, settings):
         return member
 
 
-def announce(all_members, announce_file, announce_title):
-    """给所有组员发送通知短信"""
-    if not confirm(u'确定要给所有组员发送通知短信？ (y/n)'):
-        sys.exit(0)
+def main(settings):
+    assistant = Assistant(settings)
+    settings = assistant.settings
+    shanbay = assistant.shanbay
+    team = assistant.team
+    message = assistant.message
 
-    for member in all_members:
-        msg = render(member, [announce_file])
-        if retry_shanbay(message, True, 'bool',
-                         [member['username']], announce_title, msg):
-            print((u'成功通知 %s' % member['nickname']
-                   ).encode(encoding, 'ignore'))
-        else:
-            print(u'通知发送失败!')
-
-
-def main():
-    global settings
-    global shanbay
-    global team
-    global message
-
-    conf = parse_conf()
-    settings = conf['settings']
-    announce_file = conf['announce_file']
-    announce_title = conf['announce_title']
-
-    # 登录
-    username = settings.username or input('Username: ').decode(encoding).strip()
-    password = settings.password or getpass()
-    shanbay = retry_shanbay(Shanbay, False, 'exception', username, password)
-    retry_shanbay(shanbay.login, False, 'exception')
-    team = Team(shanbay, settings.team_url)
-    message = Message(shanbay).send_message
-
-    if not announce_file:
+    if not settings.announce_file:
         # 判断当前时间
         current_datetime = check_time()
 
@@ -303,7 +247,7 @@ def main():
     new_members = []       # 新人
     warnning_members = []  # 警告
     dismiss_members = []   # 踢人
-    max_page = retry_shanbay(team.max_page, False, 'exception')
+    max_page = Retry()(team.max_page)
     all_members = get_all_members(max_page)
 
     # 给全体组员发短信
@@ -315,7 +259,7 @@ def main():
     limit = settings.limit
 
     if confirm(u'\n设置小组成员加入条件为：打卡天数>={0} (y/n) '.format(limit)):
-        if retry_shanbay(team.update_limit, False, 'bool', limit):
+        if Retry()(team.update_limit, limit):
             print(u'设置更新成功')
         else:
             print(u'设置更新失败')
@@ -355,46 +299,57 @@ def main():
             'number': len(dismiss_members)
         }
         content = render(context, settings.dismiss_topic_template)
-        if not settings.confirm:
-            print(content)
-        if retry_shanbay(team.reply_topic, False, 'bool',
-                         settings.dismiss_topic_id, content):
+        print(content)
+        if Retry(ignore_error=True)(team.reply_topic, settings.dismiss_topic_id,
+                                    content):
             print(u'帖子更新成功')
         else:
             print(u'帖子更新失败')
 
     if settings.update_grow_up_topic and confirm(u'\n更新小组数据贴 (y/n) '):
-        context = retry_shanbay(team.info, False, 'exception')
+        context = Retry(ignore_error=True)(team.info)
         context['today'] = current_datetime.strftime('%Y-%m-%d')
         content = render(context, settings.grow_up_topic_template)
-        if not settings.confirm:
-            print(content)
-        if retry_shanbay(team.reply_topic, False, 'bool',
-                         settings.grow_up_topic_id, content):
+        print(content)
+        if Retry(ignore_error=True)(team.reply_topic,
+                                    settings.grow_up_topic_id, content):
             print(u'帖子更新成功')
         else:
             print(u'帖子更新失败')
 
     if confirm(u'\n设置小组成员加入条件为：打卡天数>=%s (y/n) '
                % settings.default_limit):
-        if retry_shanbay(team.update_limit, False, 'bool',
-                         settings.default_limit):
+        if Retry()(team.update_limit, settings.default_limit):
             print(u'设置更新成功')
         else:
             print(u'设置更新失败')
 
 if __name__ == '__main__':
+    logger.setLevel(logging.DEBUG)
+    fh = logging.FileHandler('debug.log')
+    formatter = logging.Formatter('%(asctime)s - %(name)s '
+                                  '- %(funcName)s - %(lineno)d - %(levelname)s -'
+                                  ' %(message)s')
+    fh.setFormatter(formatter)
+    logger.addHandler(fh)
+
     print(u'版本：%s\n' % __version__)
+    conf = parse_conf()
+    settings = conf['settings']
+    # 登录
+    settings.username = username = settings.username or input('Username: ').decode(encoding).strip()
+    settings.password = settings.password or getpass()
+
     while True:
         try:
-            main()
+            main(settings)
         except AuthException:
             print(u'登录失败')
         except (EOFError, KeyboardInterrupt):
             pass
         except Exception as e:
             print(u'程序运行中出现错误了: %s' % e)
-            logger.exception('')
+            logger.exception(e)
         if confirm(u'\n退出? (y/n) '):
             sys.exit(0)
         print('\n')

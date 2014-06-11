@@ -3,6 +3,7 @@
 
 from random import choice
 from string import Template
+import time
 
 
 def _decode(string):
@@ -33,6 +34,34 @@ def render(context, template_name):
             print(u'模板文件 (%s) 内容格式错误!' % tpl)
             result = Template(content).safe_substitute(context)
     return result
+
+
+class Retry(object):
+    """重试功能"""
+    def __init__(self, tries=4, sleep_time=1, ignore_error=False):
+        self.ignore_error = ignore_error
+        self.tries = tries
+        self.sleep_time = sleep_time
+
+    def __call__(self, func, *args, **kwargs):
+        _exec = lambda f: f(*args, **kwargs)
+
+        # 首先重试 n-1 次
+        for __ in range(self.tries - 1):
+            try:
+                return _exec()
+            except Exception as e:
+                print(e)
+                time.sleep(self.sleep_time)
+        # 最后重试1次
+        try:
+            return _exec()
+        except Exception as e:
+            print(e)
+            if self.ignore_error:
+                return
+            else:
+                raise
 
 
 def eval_bool(*args):
@@ -76,25 +105,3 @@ class Storage(dict):
         except KeyError as k:
             raise AttributeError(k)
 storage = Storage
-
-
-# sandrotosi.blogspot.com/2011/04/python-group-list-in-sub-lists-of-n.html
-def group_iter(iterator, n=2, fill=False):
-    """| Given an iterator, it returns sub-lists made of n items
-    | (except the last that can have len < n)
-    | inspired by http://countergram.com/python-group-iterator-list-function
-
-    对列表进行分组：
-    list(group_iter([1, 2, 3, 4], 3)) -> [[1, 2, 3], [4]]
-    """
-    accumulator = []
-    for item in iterator:
-        accumulator.append(item)
-        if len(accumulator) == n:  # tested as fast as separate counter
-            yield accumulator
-            accumulator = []  # tested faster than accumulator[:] = []
-            # and tested as fast as re-using one list object
-    if len(accumulator) != 0:
-        if fill:
-            accumulator += [None] * (n - len(accumulator))
-        yield accumulator
