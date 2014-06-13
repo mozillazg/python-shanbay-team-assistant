@@ -102,6 +102,9 @@ class Assistant(object):
 
     def check_welcome(self, member):
         """检查是否是新人"""
+        if not self.settings.welcome:
+            return
+
         if eval_bool(member['days'], self.settings.welcome):
             if Retry(ignore_error=True)(self.send_message, [member['username']],
                                         self.settings.welcome_title,
@@ -114,6 +117,9 @@ class Assistant(object):
 
     def check_congratulate(self, member):
         """恭喜"""
+        if not self.settings.congratulate:
+            return
+
         for n, days in enumerate(self.settings.congratulate):
             if member['days'] == days:
                 tmps = self.settings.congratulate_template
@@ -174,6 +180,9 @@ class Assistant(object):
 
     def check_dismiss(self, member):
         """踢人"""
+        if not self.settings.dismiss:
+            return
+
         condition_bool = self._check_condition(self.settings.dismiss, member)
         if not condition_bool:
             return
@@ -194,6 +203,9 @@ class Assistant(object):
 
     def check_warnning(self, member):
         """警告"""
+        if not self.settings.warnning:
+            return
+
         condition_bool = self._check_condition(self.settings.warnning, member)
         if not condition_bool:
             return
