@@ -79,6 +79,7 @@ class Assistant(object):
         current_time = self.current_datetime.time()
         # 查卡时间
         start_time = datetime.datetime.strptime(self.settings.start_time, '%H:%M').time()
+        print(u'当前时间：%s\n' % self.current_datetime.strftime('%Y-%m-%d %H:%M'))
         if current_time > start_time:
             return self.current_datetime
         else:
@@ -332,7 +333,7 @@ def main():
     fh.setFormatter(formatter)
     logger.addHandler(fh)
 
-    print(u'版本：%s\n' % __version__)
+    print(u'版本：%s' % __version__)
     settings = parse_conf()
     # 登录
     settings.username = settings.username or input('Username: ').decode(encoding).strip()
