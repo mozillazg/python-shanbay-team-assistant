@@ -3,12 +3,6 @@
 
 """扇贝网小组管理助手"""
 
-__version__ = '0.1.7.dev'
-__author__ = 'mozillazg'
-__license__ = 'MIT'
-__copyright__ = 'Copyright (c) 2014 mozillazg'
-
-import datetime
 from getpass import getpass
 import logging
 import sys
@@ -17,8 +11,9 @@ import time
 from argparse import ArgumentParser
 from shanbay import Shanbay, AuthException, Team, Message
 
-from conf import Setting
-from utils import eval_bool, render, Retry
+from . import __version__
+from .conf import Setting
+from .utils import eval_bool, render, Retry
 
 try:
     input = raw_input
@@ -78,9 +73,8 @@ class Assistant(object):
         self.current_datetime = retry(self.shanbay.server_date)
         current_time = self.current_datetime.time()
         # 查卡时间
-        start_time = datetime.datetime.strptime(self.settings.start_time, '%H:%M').time()
         print(u'当前时间：%s\n' % self.current_datetime.strftime('%Y-%m-%d %H:%M'))
-        if current_time > start_time:
+        if current_time > self.settings.start_time:
             return self.current_datetime
         else:
             print(u'时间还早者呢，请 {0} 后再操作!'.format(self.settings.start_time))
@@ -149,16 +143,21 @@ class Assistant(object):
             else:
                 print(u'通知发送失败!')
 
+    def _split_condition(condition):
+        checked_yesterday = None
+        check_list = [x.strip() for x in condition.split(':')]
+        try:
+            days, rate, checked, points, checked_yesterday = check_list
+        except ValueError:  # 兼容旧的配置文件
+            days, rate, checked, points = check_list
+        return days, rate, checked, points, checked_yesterday
+
     def _check_condition(self, conditions, member):
         condition_bool = False
         # 检查是否满足条件
         for condition in conditions:
-            checked_yesterday = None
-            check_list = [x.strip() for x in condition.split(':')]
-            try:
-                days, rate, checked, points, checked_yesterday = check_list
-            except ValueError:
-                days, rate, checked, points = check_list
+            (days, rate, checked, points,
+             checked_yesterday) = self._split_condition(condition)
 
             bool_ = True
             if days:  # 组龄

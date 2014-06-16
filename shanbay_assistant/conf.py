@@ -9,6 +9,7 @@ from os.path import realpath
 from StringIO import StringIO
 
 from utils import storage, _decode
+import datetime
 
 glob = lambda f: map(realpath, _glob(f))
 
@@ -73,6 +74,7 @@ class Setting(object):
 
         # 踢人开始时间
         start_time = self._get_option('start_time')
+        start_time = datetime.datetime.strptime(start_time, '%H:%M').time()
 
         # 成员加入条件
         limit = self._get_option('limit', 1000)
