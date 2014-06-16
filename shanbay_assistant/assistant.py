@@ -143,21 +143,11 @@ class Assistant(object):
             else:
                 print(u'通知发送失败!')
 
-    def _split_condition(condition):
-        checked_yesterday = None
-        check_list = [x.strip() for x in condition.split(':')]
-        try:
-            days, rate, checked, points, checked_yesterday = check_list
-        except ValueError:  # 兼容旧的配置文件
-            days, rate, checked, points = check_list
-        return days, rate, checked, points, checked_yesterday
-
     def _check_condition(self, conditions, member):
         condition_bool = False
         # 检查是否满足条件
         for condition in conditions:
-            (days, rate, checked, points,
-             checked_yesterday) = self._split_condition(condition)
+            days, rate, checked, points, checked_yesterday = condition
 
             bool_ = True
             if days:  # 组龄

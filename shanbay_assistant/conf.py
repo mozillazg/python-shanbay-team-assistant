@@ -54,6 +54,15 @@ class Setting(object):
         lst = self._get_option_multi_line(key, default)
         return reduce(lambda x, y: x + y, map(glob, lst))
 
+    def _split_condition(self, condition):
+        checked_yesterday = None
+        check_list = [x.strip() for x in condition.split(':')]
+        try:
+            days, rate, checked, points, checked_yesterday = check_list
+        except ValueError:  # 兼容旧的配置文件
+            days, rate, checked, points = check_list
+        return days, rate, checked, points, checked_yesterday
+
     def settings(self):
         username = self._get_option('username')
         password = self._get_option('password')
@@ -86,12 +95,13 @@ class Setting(object):
         welcome_template = self._get_option_multi_line_f('welcome_template',
                                                          ['welcome_mail.txt'])
         # 警告
-        warnning = self._get_option_list('warnning')
+        warnning = map(self._split_condition,
+                       self._get_option_list('warnning'))
         warnning_title = self._get_option('warnning_title')
         warnning_template = self._get_option_multi_line_f('warnning_template',
                                                           ['warn_mail.txt'])
         # 踢人
-        dismiss = self._get_option_list('dismiss')
+        dismiss = map(self._split_condition, self._get_option_list('dismiss'))
         dismiss_title = self._get_option('dismiss_title')
         dismiss_template = self._get_option_multi_line_f('dismiss_template',
                                                          ['dismiss_mail.txt'])
