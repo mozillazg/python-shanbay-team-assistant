@@ -58,10 +58,15 @@ class Setting(object):
         checked_yesterday = None
         check_list = [x.strip() for x in condition.split(':')]
         try:
-            days, rate, checked, points, checked_yesterday = check_list
+            days, rate, checked_today, points, checked_yesterday = check_list
         except ValueError:  # 兼容旧的配置文件
-            days, rate, checked, points = check_list
-        return days, rate, checked, points, checked_yesterday
+            days, rate, checked_today, points = check_list
+
+        __ = lambda x: int(x) if x else None
+        return storage(days=days, rate=rate, points=points,
+                       checked_today=__(checked_today),
+                       checked_yesterday=__(checked_yesterday),
+                       )
 
     def settings(self):
         username = self._get_option('username')

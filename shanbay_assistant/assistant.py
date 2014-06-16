@@ -147,7 +147,11 @@ class Assistant(object):
         condition_bool = False
         # 检查是否满足条件
         for condition in conditions:
-            days, rate, checked, points, checked_yesterday = condition
+            days = condition['days']
+            rate = condition['rate']
+            checked_today = condition['checked_today']
+            points = condition['points']
+            checked_yesterday = condition['checked_yesterday']
 
             bool_ = True
             if days:  # 组龄
@@ -156,9 +160,9 @@ class Assistant(object):
                 bool_ = bool_ and eval_bool(member['rate'], rate)
             if points:  # 贡献值
                 bool_ = bool_ and eval_bool(member['points'], points)
-            if checked and (not int(checked)):  # 当天未打卡
+            if checked_today is not None and (not checked_today):  # 当天未打卡
                 bool_ = bool_ and (not member['checked'])
-            if checked_yesterday and (not int(checked_yesterday)):  # 昨天未打卡
+            if checked_yesterday is not None and (not checked_yesterday):  # 昨天未打卡
                 bool_ = bool_ and (not member['checked_yesterday'])
 
             condition_bool = condition_bool or bool_
