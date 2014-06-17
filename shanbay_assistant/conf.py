@@ -62,7 +62,7 @@ class Setting(object):
         except ValueError:  # 兼容旧的配置文件
             days, rate, checked_today, points = check_list
 
-        __ = lambda x: int(x) if x else None
+        __ = lambda x: bool(x) if x else None
         return storage(days=days, rate=rate, points=points,
                        checked_today=__(checked_today),
                        checked_yesterday=__(checked_yesterday),
@@ -119,6 +119,9 @@ class Setting(object):
 
         # 询问
         confirm = self._get_option_bool('confirm', True)
+
+        # template 是内容字符串，而不是文件名？
+        is_template_string = False
 
         d = locals()
         d.pop('self')

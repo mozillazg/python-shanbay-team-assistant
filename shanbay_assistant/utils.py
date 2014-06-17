@@ -17,20 +17,24 @@ def _decode(string):
     return string
 
 
-def render(context, templates):
+def render(context, templates, is_content_list=False):
     """渲染模板，返回渲染结果
 
     :param context: 模板内使用的变量
     :type context: dict
-    :templates: 模板文件路径列表(从列表中随机选择一个文件进行渲染)
-                或模板内容字符串
+    :param templates: 模板文件路径列表(从列表中随机选择一个文件进行渲染)
+                      或模板内容字符串
+    :param is_content_list: templates 是否是模板内容字符串列表
     """
     if isinstance(templates, basestring):
         content = templates
     else:
         tpl = choice(templates)
-        with open(tpl) as f:
-            content = _decode(f.read())
+        if is_content_list:
+            content = tpl
+        else:
+            with open(tpl) as f:
+                content = _decode(f.read())
     try:
         result = Template(content).substitute(context)
     except ValueError:

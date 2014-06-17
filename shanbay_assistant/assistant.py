@@ -102,7 +102,10 @@ class Assistant(object):
         if eval_bool(member['days'], self.settings.welcome):
             if Retry(ignore_error=True)(self.send_message, [member['username']],
                                         self.settings.welcome_title,
-                                        render(member, self.settings.welcome_template)):
+                                        render(member,
+                                               self.settings.welcome_template,
+                                               self.settings.is_template_string
+                                               )):
 
                 print(u'欢迎短信已发送')
             else:
@@ -123,7 +126,9 @@ class Assistant(object):
 
                 if Retry(ignore_error=True)(self.send_message, [member['username']],
                                             self.settings.congratulate_title,
-                                            render(member, tmps)):
+                                            render(member, tmps,
+                                                   self.settings.is_template_string
+                                                   )):
                     print(u'恭喜短信已发送')
                 else:
                     print(u'恭喜短信发送失败')
@@ -135,7 +140,8 @@ class Assistant(object):
             return
 
         for member in self.members:
-            msg = render(member, [self.settings.announce_file])
+            msg = render(member, self.settings.announce_file,
+                         self.settings.is_template_string)
             if Retry(ignore_error=True)(self.send_message, [member['username']],
                                         self.settings.announce_title, msg):
                 print((u'成功通知 %s' % member['nickname']
@@ -185,7 +191,9 @@ class Assistant(object):
                 print(u'已执行踢人操作')
                 if Retry(ignore_error=True)(self.send_message, [member['username']],
                                             self.settings.dismiss_title,
-                                            render(member, self.settings.dismiss_template)):
+                                            render(member, self.settings.dismiss_template,
+                                                   self.settings.is_template_string
+                                                   )):
 
                     print(u'踢人短信已发送')
                 else:
@@ -206,7 +214,9 @@ class Assistant(object):
         if self.confirm(u'是否发送警告短信? (y/n) '):
             if Retry(ignore_error=True)(self.send_message, [member['username']],
                                         self.settings.warnning_title,
-                                        render(member, self.settings.warnning_template)):
+                                        render(member, self.settings.warnning_template,
+                                               self.settings.is_template_string
+                                               )):
 
                 print(u'警告短信已发送')
             else:
@@ -219,7 +229,8 @@ class Assistant(object):
                 'today': self.current_datetime.strftime('%Y-%m-%d'),
                 'number': dismiss_num
             }
-            content = render(context, self.settings.dismiss_topic_template)
+            content = render(context, self.settings.dismiss_topic_template,
+                             self.settings.is_template_string)
             print(content)
             if Retry(ignore_error=True)(self.team.reply_topic,
                                         self.settings.dismiss_topic_id,
@@ -231,7 +242,8 @@ class Assistant(object):
         if self.settings.update_grow_up_topic and self.confirm(u'\n更新小组数据贴 (y/n) '):
             context = Retry(ignore_error=True)(self.team.info)
             context['today'] = self.current_datetime.strftime('%Y-%m-%d')
-            content = render(context, self.settings.grow_up_topic_template)
+            content = render(context, self.settings.grow_up_topic_template,
+                             self.settings.is_template_string)
             print(content)
             if Retry(ignore_error=True)(self.team.reply_topic,
                                         self.settings.grow_up_topic_id, content):
@@ -288,7 +300,7 @@ def parse_conf():
     args = parser.parse_args()
     settings = Setting(args.settings).settings()
     settings.confirm = args.interactive or settings.confirm
-    settings.announce_file = args.announce
+    settings.announce_file = [args.announce] if args.announce else None
     settings.announce_title = args.title.decode(encoding)
     return settings
 
