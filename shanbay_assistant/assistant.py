@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
+from __future__ import absolute_import, print_function, unicode_literals
 
 """扇贝网小组管理助手"""
 
@@ -13,7 +14,7 @@ from shanbay import Shanbay, AuthException, Team, Message
 
 from . import __version__
 from .conf import Setting
-from .utils import eval_bool, render, Retry
+from .utils import eval_bool, render, Retry, PrintStrWriter
 
 try:
     input = raw_input
@@ -41,7 +42,7 @@ class Assistant(object):
                 print(msg + 'y')
                 time.sleep(self.sleep_time)
                 return True
-            c = input(msg.encode(encoding)).strip().lower()
+            c = input(msg).strip().lower()
             if c == 'y':
                 return True
             elif c == 'n':
@@ -49,22 +50,21 @@ class Assistant(object):
 
     def output_member_info(self, member):
         """输出组员信息"""
-        print((u'用户名: {username:<10} 昵称: {nickname:<20} 组龄: {days:<5}'
-               u' 贡献值成长值：{points:<8}'.format(**member)
-               + u' 打卡率: {rate}%'.format(**member).ljust(15)
-               + u' 昨天是否打卡: '
-               + (u'是' if member['checked_yesterday'] else u'否')
-               + u'    今天是否打卡：'
-               + (u'是' if member['checked'] else u'否')
-               ).encode(encoding, 'ignore')
+        print('用户名: {username:<10} 昵称: {nickname:<20} 组龄: {days:<5}'
+              ' 贡献值成长值：{points:<8}'.format(**member)
+              + ' 打卡率: {rate}%'.format(**member).ljust(15)
+              + ' 昨天是否打卡: '
+              + ('是' if member['checked_yesterday'] else '否')
+              + '    今天是否打卡：'
+              + ('是' if member['checked'] else '否')
               )
 
     def update_limit(self, days):
-        if self.confirm(u'设置小组成员加入条件为：打卡天数>=%s (y/n) ' % days):
+        if self.confirm('\n设置小组成员加入条件为：打卡天数>=%s (y/n) ' % days):
             if Retry()(self.team.update_limit, days):
-                print(u'设置更新成功')
+                print('设置更新成功')
             else:
-                print(u'设置更新失败')
+                print('设置更新失败')
 
     def check_time(self):
         """检查是否到了可以查卡的时间"""
@@ -77,20 +77,20 @@ class Assistant(object):
         if current_time > self.settings.start_time:
             return self.current_datetime
         else:
-            print(u'时间还早者呢，请 {0} 后再操作!'.format(self.settings.start_time))
+            print('时间还早者呢，请 {0} 后再操作!'.format(self.settings.start_time))
             self.update_limit(self.settings.default_limit)
 
     def get_all_members(self, max_page):
         """获取所有成员信息"""
         all_members = []
         for page in range(1, max_page + 1):
-            print(u'获取第%s页的所有成员' % page)
+            print('获取第%s页的所有成员' % page)
             members = Retry()(self.team.single_page_members, page)
             all_members.extend(members)
-            print(u'%s人' % len(members))
+            print('%s人' % len(members))
             time.sleep(self.sleep_time)
 
-        print(u'total: %s人' % len(all_members))
+        print('total: %s人' % len(all_members))
         self.members = all_members
         return all_members
 
@@ -107,9 +107,9 @@ class Assistant(object):
                                                self.settings.is_template_string
                                                )):
 
-                print(u'欢迎短信已发送')
+                print('欢迎短信已发送')
             else:
-                print(u'欢迎短信发送失败')
+                print('欢迎短信发送失败')
             return member
 
     def check_congratulate(self, member):
@@ -129,25 +129,24 @@ class Assistant(object):
                                             render(member, tmps,
                                                    self.settings.is_template_string
                                                    )):
-                    print(u'恭喜短信已发送')
+                    print('恭喜短信已发送')
                 else:
-                    print(u'恭喜短信发送失败')
+                    print('恭喜短信发送失败')
                 return member
 
     def announce(self):
         """给所有组员发送通知短信"""
-        if not self.confirm(u'确定要给所有组员发送通知短信？ (y/n)'):
+        if not self.confirm('确定要给所有组员发送通知短信？ (y/n)'):
             return
 
         for member in self.members:
-            msg = render(member, self.settings.announce_file,
+            msg = render(member, [self.settings.announce_file],
                          self.settings.is_template_string)
             if Retry(ignore_error=True)(self.send_message, [member['username']],
                                         self.settings.announce_title, msg):
-                print((u'成功通知 %s' % member['nickname']
-                       ).encode(encoding, 'ignore'))
+                print('成功通知 %s' % member['nickname'])
             else:
-                print(u'通知发送失败!')
+                print('通知发送失败!')
 
     def _check_condition(self, conditions, member):
         condition_bool = False
@@ -186,21 +185,21 @@ class Assistant(object):
         if not condition_bool:
             return
 
-        if self.confirm(u'是否踢人并发送踢人短信? (y/n) '):
+        if self.confirm('是否踢人并发送踢人短信? (y/n) '):
             if Retry(ignore_error=True)(self.team.dismiss, member['id']):
-                print(u'已执行踢人操作')
+                print('已执行踢人操作')
                 if Retry(ignore_error=True)(self.send_message, [member['username']],
                                             self.settings.dismiss_title,
                                             render(member, self.settings.dismiss_template,
                                                    self.settings.is_template_string
                                                    )):
 
-                    print(u'踢人短信已发送')
+                    print('踢人短信已发送')
                 else:
-                    print(u'踢人短信发送失败')
+                    print('踢人短信发送失败')
                 return member
             else:
-                print(u'踢人失败')
+                print('踢人失败')
 
     def check_warnning(self, member):
         """警告"""
@@ -211,20 +210,20 @@ class Assistant(object):
         if not condition_bool:
             return
 
-        if self.confirm(u'是否发送警告短信? (y/n) '):
+        if self.confirm('是否发送警告短信? (y/n) '):
             if Retry(ignore_error=True)(self.send_message, [member['username']],
                                         self.settings.warnning_title,
                                         render(member, self.settings.warnning_template,
                                                self.settings.is_template_string
                                                )):
 
-                print(u'警告短信已发送')
+                print('警告短信已发送')
             else:
-                print(u'警告短信发送失败')
+                print('警告短信发送失败')
             return member
 
     def update_topic(self, dismiss_num):
-        if self.settings.update_dismiss_topic and self.confirm(u'\n更新查卡贴 (y/n)'):
+        if self.settings.update_dismiss_topic and self.confirm('\n更新查卡贴 (y/n)'):
             context = {
                 'today': self.current_datetime.strftime('%Y-%m-%d'),
                 'number': dismiss_num
@@ -235,11 +234,11 @@ class Assistant(object):
             if Retry(ignore_error=True)(self.team.reply_topic,
                                         self.settings.dismiss_topic_id,
                                         content):
-                print(u'帖子更新成功')
+                print('帖子更新成功')
             else:
-                print(u'帖子更新失败')
+                print('帖子更新失败')
 
-        if self.settings.update_grow_up_topic and self.confirm(u'\n更新小组数据贴 (y/n) '):
+        if self.settings.update_grow_up_topic and self.confirm('\n更新小组数据贴 (y/n) '):
             context = Retry(ignore_error=True)(self.team.info)
             context['today'] = self.current_datetime.strftime('%Y-%m-%d')
             content = render(context, self.settings.grow_up_topic_template,
@@ -247,9 +246,9 @@ class Assistant(object):
             print(content)
             if Retry(ignore_error=True)(self.team.reply_topic,
                                         self.settings.grow_up_topic_id, content):
-                print(u'帖子更新成功')
+                print('帖子更新成功')
             else:
-                print(u'帖子更新失败')
+                print('帖子更新失败')
 
     def handle(self):
         new_members = []       # 新人
@@ -300,7 +299,7 @@ def parse_conf():
     args = parser.parse_args()
     settings = Setting(args.settings).settings()
     settings.confirm = args.interactive or settings.confirm
-    settings.announce_file = [args.announce] if args.announce else None
+    settings.announce_file = args.announce
     settings.announce_title = args.title.decode(encoding)
     return settings
 
@@ -328,12 +327,13 @@ def check(settings):
     assistant.update_limit(settings.limit)
 
     # 对所有成员进行操作
-    print(u'\n开始对所有成员进行处理')
+    print('\n开始对所有成员进行处理')
     dismiss_members = assistant.handle()[3]
 
-    print(u'\n被踢:')
+    print('\n被踢:')
     for x in dismiss_members:
         assistant.output_member_info(x)
+    print('')
 
     # 更新查卡贴
     assistant.update_topic(len(dismiss_members))
@@ -349,8 +349,11 @@ def main():
                                   ' %(message)s')
     fh.setFormatter(formatter)
     logger.addHandler(fh)
+    writer = PrintStrWriter()
+    sys.stdout = writer
+    sys.stderr = writer
 
-    print(u'版本：%s' % __version__)
+    print('版本：%s\n' % __version__)
     settings = parse_conf()
     # 登录
     settings.username = settings.username or input('Username: ').decode(encoding).strip()
@@ -360,15 +363,18 @@ def main():
         try:
             check(settings)
         except AuthException:
-            print(u'登录失败')
+            print('登录失败')
         except (EOFError, KeyboardInterrupt):
             pass
         except Exception as e:
-            print(u'程序运行中出现错误了: %s' % e)
+            print('程序运行中出现错误了: %s' % e)
             logger.exception(e)
-        if input(u'\n退出? (y/n)'.encode(encoding)).strip().lower() == 'y':
+        if input('\n退出? (y/n)').strip().lower() == 'y':
             sys.exit(0)
         print('\n')
+
+    sys.stdout = sys.__stdout__
+    sys.stderr = sys.__stderr__
 
 if __name__ == '__main__':
     main()

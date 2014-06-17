@@ -1,15 +1,15 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-from __future__ import unicode_literals
+from __future__ import absolute_import, print_function, unicode_literals
 
 import ConfigParser
+import datetime
 from glob import glob as _glob
 from os.path import realpath
 from StringIO import StringIO
 
-from utils import storage, _decode
-import datetime
+from .utils import storage, _decode
 
 glob = lambda f: map(realpath, _glob(f))
 

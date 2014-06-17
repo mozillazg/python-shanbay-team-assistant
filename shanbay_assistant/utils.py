@@ -1,9 +1,20 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
+from __future__ import absolute_import, print_function, unicode_literals
 
 from random import choice
 from string import Template
+import sys
 import time
+
+
+class PrintStrWriter(object):
+    def __init__(self, encoding=sys.stdin.encoding, errors='ignore'):
+        self.encoding = encoding
+        self.errors = errors
+
+    def write(self, message):
+        sys.__stdout__.write(message.encode(self.encoding, self.errors))
 
 
 def _decode(string):
@@ -38,7 +49,7 @@ def render(context, templates, is_content_list=False):
     try:
         result = Template(content).substitute(context)
     except ValueError:
-        print(u'模板文件 (%s) 内容格式错误!' % tpl)
+        print('模板文件 (%s) 内容格式错误!' % tpl)
         result = Template(content).safe_substitute(context)
     return result
 
