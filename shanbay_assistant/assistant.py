@@ -14,12 +14,8 @@ from shanbay import Shanbay, AuthException, Team, Message
 
 from . import __version__
 from .conf import Setting
-from .utils import eval_bool, render, Retry, PrintStrWriter
+from .utils import eval_bool, render, Retry, PrintStrWriter, _confirm, input
 
-try:
-    input = raw_input
-except NameError:
-    pass
 encoding = sys.stdin.encoding
 logger = logging.getLogger(__name__)
 
@@ -37,16 +33,7 @@ class Assistant(object):
 
     def confirm(self, msg):
         """提示信息"""
-        for __ in range(30):
-            if not self.settings.confirm:
-                print(msg + 'y')
-                time.sleep(self.sleep_time)
-                return True
-            c = input(msg).strip().lower()
-            if c == 'y':
-                return True
-            elif c == 'n':
-                return False
+        return _confirm(self.settings.confirm, msg, self.sleep_time)
 
     def output_member_info(self, member):
         """输出组员信息"""
@@ -223,6 +210,8 @@ class Assistant(object):
             return member
 
     def update_topic(self, dismiss_num):
+        team_info = Retry(ignore_error=True)(self.team.info)
+
         if self.settings.update_dismiss_topic and self.confirm('\n更新查卡贴 (y/n)'):
             context = {
                 'today': self.current_datetime.strftime('%Y-%m-%d'),
@@ -239,7 +228,7 @@ class Assistant(object):
                 print('帖子更新失败')
 
         if self.settings.update_grow_up_topic and self.confirm('\n更新小组数据贴 (y/n) '):
-            context = Retry(ignore_error=True)(self.team.info)
+            context = team_info
             context['today'] = self.current_datetime.strftime('%Y-%m-%d')
             content = render(context, self.settings.grow_up_topic_template,
                              self.settings.is_template_string)
@@ -249,6 +238,8 @@ class Assistant(object):
                 print('帖子更新成功')
             else:
                 print('帖子更新失败')
+
+        return team_info
 
     def handle(self):
         new_members = []       # 新人
@@ -336,19 +327,23 @@ def check(settings):
     print('')
 
     # 更新查卡贴
-    assistant.update_topic(len(dismiss_members))
+    team_info = assistant.update_topic(len(dismiss_members))
     # 更新成员加入条件
     assistant.update_limit(settings.default_limit)
 
+    return {
+        'assistant': assistant,
+        'dismiss_members': dismiss_members,
+        'team_info': team_info,
+    }
+
 
 def main():
-    logger.setLevel(logging.DEBUG)
-    fh = logging.FileHandler('debug.log')
-    formatter = logging.Formatter('%(asctime)s - %(name)s '
-                                  '- %(funcName)s - %(lineno)d - %(levelname)s -'
-                                  ' %(message)s')
-    fh.setFormatter(formatter)
-    logger.addHandler(fh)
+    format_str = ('%(asctime)s - %(name)s'
+                  ' - %(funcName)s - %(lineno)d - %(levelname)s'
+                  ' - %(message)s')
+    logging.basicConfig(filename='debug.log', level=logging.INFO,
+                        format=format_str)
     writer = PrintStrWriter()
     sys.stdout = writer
     sys.stderr = writer
@@ -368,9 +363,10 @@ def main():
             pass
         except Exception as e:
             print('程序运行中出现错误了: %s' % e)
-            logger.exception(e)
-        if input('\n退出? (y/n)').strip().lower() == 'y':
-            sys.exit(0)
+            logging.exception(e)
+
+        if _confirm(settings.confirm, '\n退出? (y/n)', 0):
+            break
         print('\n')
 
     sys.stdout = sys.__stdout__

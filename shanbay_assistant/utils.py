@@ -2,10 +2,32 @@
 # -*- coding: utf-8 -*-
 from __future__ import absolute_import, print_function, unicode_literals
 
+import logging
 from random import choice
 from string import Template
 import sys
 import time
+
+try:
+    input = raw_input
+except NameError:
+    input = input
+logger = logging.getLogger(__name__)
+
+
+def _confirm(need_confirm, msg, sleep_time=1):
+    """提示信息"""
+    for __ in range(100):
+        if not need_confirm:
+            print(msg + 'y')
+            time.sleep(sleep_time)
+            return True
+
+        c = input(msg).strip().lower()
+        if c == 'y':
+            return True
+        elif c == 'n':
+            return False
 
 
 class PrintStrWriter(object):
@@ -76,6 +98,7 @@ class Retry(object):
             return _exec()
         except Exception as e:
             print(e)
+            logger.exception(e)
             if self.ignore_error:
                 return
             else:
