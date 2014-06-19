@@ -332,6 +332,7 @@ def check(settings):
     assistant.update_limit(settings.default_limit)
 
     return {
+        'members': assistant.members,
         'assistant': assistant,
         'dismiss_members': dismiss_members,
         'team_info': team_info,
