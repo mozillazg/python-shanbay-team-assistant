@@ -123,7 +123,7 @@ class Assistant(object):
 
     def announce(self):
         """给所有组员发送通知短信"""
-        if not self.confirm('确定要给所有组员发送通知短信？ (y/n)'):
+        if not self.confirm('确定要给所有组员发送通知短信？ (y/n) '):
             return
 
         for member in self.members:
@@ -212,7 +212,7 @@ class Assistant(object):
     def update_topic(self, dismiss_num):
         team_info = Retry(ignore_error=True)(self.team.info)
 
-        if self.settings.update_dismiss_topic and self.confirm('\n更新查卡贴 (y/n)'):
+        if self.settings.update_dismiss_topic and self.confirm('\n更新查卡贴 (y/n) '):
             context = {
                 'today': self.current_datetime.strftime('%Y-%m-%d'),
                 'number': dismiss_num
@@ -370,7 +370,7 @@ def main():
             print('程序运行中出现错误了: %s' % e)
             logging.exception(e)
 
-        if _confirm(settings.confirm, '\n退出? (y/n)', 0):
+        if _confirm(settings.confirm, '\n退出? (y/n) ', 0):
             break
         print('\n')
 
