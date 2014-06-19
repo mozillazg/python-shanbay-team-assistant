@@ -269,8 +269,12 @@ class Assistant(object):
             # 踢人
             if self.check_dismiss(member):
                 dismiss_members.append(member)
-        return (new_members, congratulate_members,
-                warnning_members, dismiss_members)
+        return {
+            'new_members': new_members,
+            'congratulate_members': congratulate_members,
+            'warnning_members': warnning_members,
+            'dismiss_members': dismiss_members
+        }
 
 
 def parse_conf():
@@ -319,7 +323,7 @@ def check(settings):
 
     # 对所有成员进行操作
     print('\n开始对所有成员进行处理')
-    dismiss_members = assistant.handle()[3]
+    dismiss_members = assistant.handle()['dismiss_members']
 
     print('\n被踢:')
     for x in dismiss_members:
