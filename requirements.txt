@@ -1,2 +1,2 @@
 argparse
-shanbay==0.2.0
+shanbay==0.2.1

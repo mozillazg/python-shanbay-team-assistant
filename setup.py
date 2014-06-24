@@ -14,6 +14,7 @@ except ImportError:
 
 if sys.argv[-1] == 'publish':
     os.system('python setup.py sdist upload')
+    os.system('python setup.py bdist_wheel upload')
     sys.exit()
 
 options = {
@@ -42,7 +43,7 @@ except ImportError:
 current_dir = os.path.dirname(os.path.realpath(__file__))
 requirements = [
     'argparse',
-    'shanbay==0.2.0',
+    'shanbay==0.2.1',
 ]
 packages = [
     'shanbay_assistant',
