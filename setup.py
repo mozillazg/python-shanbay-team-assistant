@@ -43,7 +43,7 @@ except ImportError:
 current_dir = os.path.dirname(os.path.realpath(__file__))
 requirements = [
     'argparse',
-    'shanbay==0.2.1',
+    'shanbay==0.3.0',
 ]
 packages = [
     'shanbay_assistant',
