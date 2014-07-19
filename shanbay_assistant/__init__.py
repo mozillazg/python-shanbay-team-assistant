@@ -3,7 +3,7 @@
 from __future__ import absolute_import, print_function, unicode_literals
 
 __title__ = 'shanbay-assistant'
-__version__ = '0.2.0'
+__version__ = '0.2.1'
 __author__ = 'mozillazg'
 __email__ = 'mozillazg101@gmail.com'
 __license__ = 'MIT'
