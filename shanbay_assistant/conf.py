@@ -91,7 +91,7 @@ class Setting(object):
         start_time = datetime.datetime.strptime(start_time, '%H:%M').time()
 
         # 成员加入条件
-        limit = self._get_option('limit', 1000)
+        limit = self._get_option('limit', 10000)
         default_limit = self._get_option('default_limit')
 
         # 欢迎
@@ -122,6 +122,9 @@ class Setting(object):
 
         # template 是内容字符串，而不是文件名？
         is_template_string = False
+
+        # 被踢人数阈值，如果总被踢人数超过此值将不执行踢人操作
+        max_dismiss = int(self._get_option('max_dismiss', 10000))
 
         d = locals()
         d.pop('self')

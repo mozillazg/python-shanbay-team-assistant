@@ -169,24 +169,9 @@ class Assistant(object):
             return
 
         condition_bool = self._check_condition(self.settings.dismiss, member)
-        if not condition_bool:
-            return
+        if condition_bool:
+            return member
 
-        if self.confirm('是否踢人并发送踢人短信? (y/n) '):
-            if Retry(ignore_error=True)(self.team.dismiss, member['id']):
-                print('已执行踢人操作')
-                if Retry(ignore_error=True)(self.send_message, [member['username']],
-                                            self.settings.dismiss_title,
-                                            render(member, self.settings.dismiss_template,
-                                                   self.settings.is_template_string
-                                                   )):
-
-                    print('踢人短信已发送')
-                else:
-                    print('踢人短信发送失败')
-                return member
-            else:
-                print('踢人失败')
 
     def check_warnning(self, member):
         """警告"""
@@ -197,17 +182,17 @@ class Assistant(object):
         if not condition_bool:
             return
 
-        if self.confirm('是否发送警告短信? (y/n) '):
-            if Retry(ignore_error=True)(self.send_message, [member['username']],
-                                        self.settings.warnning_title,
-                                        render(member, self.settings.warnning_template,
-                                               self.settings.is_template_string
-                                               )):
+        # if self.confirm('是否发送警告短信? (y/n) '):
+        if Retry(ignore_error=True)(self.send_message, [member['username']],
+                                    self.settings.warnning_title,
+                                    render(member, self.settings.warnning_template,
+                                           self.settings.is_template_string
+                                           )):
 
-                print('警告短信已发送')
-            else:
-                print('警告短信发送失败')
-            return member
+            print('警告短信已发送')
+        else:
+            print('警告短信发送失败')
+        return member
 
     def update_topic(self, dismiss_num):
         team_info = Retry(ignore_error=True)(self.team.info)
@@ -246,13 +231,20 @@ class Assistant(object):
         congratulate_members = []
         warnning_members = []  # 警告
         dismiss_members = []   # 踢人
+        all_dismiss_members = []   # 踢人
 
         for member in self.members:
             time.sleep(self.sleep_time)
-            self.output_member_info(member)
             # 别把自己给踢人
             if member['username'].lower() == self.username.lower():
                 continue
+
+            # 踢人
+            if self.check_dismiss(member):
+                all_dismiss_members.append(member)
+                continue
+
+            self.output_member_info(member)
 
             # 新人
             if self.check_welcome(member):
@@ -266,9 +258,31 @@ class Assistant(object):
             if self.check_warnning(member):
                 warnning_members.append(member)
 
-            # 踢人
-            if self.check_dismiss(member):
-                dismiss_members.append(member)
+        # 先检查有多少符合踢人条件，在执行踢人操作
+        for member in all_dismiss_members:
+            # 操作阈值不执行踢人操作
+            if len(all_dismiss_members) > self.settings.max_dismiss:
+                if self.confirm('将要被踢的总人数（%s人）超过了阈值（%s人）。是否终止踢人操作？ (y/n) '
+                                % (len(all_dismiss_members), self.settings.max_dismiss)):
+                    return {}
+
+            self.output_member_info(member)
+            if self.confirm('是否踢人并发送踢人短信? (y/n) '):
+                if Retry(ignore_error=True)(self.team.dismiss, member['id']):
+                    dismiss_members.append(member)
+                    print('已执行踢人操作')
+                    if Retry(ignore_error=True)(self.send_message, [member['username']],
+                                                self.settings.dismiss_title,
+                                                render(member, self.settings.dismiss_template,
+                                                       self.settings.is_template_string
+                                                       )):
+
+                        print('踢人短信已发送')
+                    else:
+                        print('踢人短信发送失败')
+                else:
+                    print('踢人失败')
+        
         return {
             'new_members': new_members,
             'congratulate_members': congratulate_members,
@@ -323,15 +337,19 @@ def check(settings):
 
     # 对所有成员进行操作
     print('\n开始对所有成员进行处理')
-    dismiss_members = assistant.handle()['dismiss_members']
+    try:
+        dismiss_members = assistant.handle()['dismiss_members']
+        print('\n被踢:')
+        for x in dismiss_members:
+            assistant.output_member_info(x)
+        print('')
+        # 更新查卡贴
+        team_info = assistant.update_topic(len(dismiss_members))
+    except KeyError:
+        dismiss_members = []
+        team_info = {}
+        logger.exception("")
 
-    print('\n被踢:')
-    for x in dismiss_members:
-        assistant.output_member_info(x)
-    print('')
-
-    # 更新查卡贴
-    team_info = assistant.update_topic(len(dismiss_members))
     # 更新成员加入条件
     assistant.update_limit(settings.default_limit)
 
