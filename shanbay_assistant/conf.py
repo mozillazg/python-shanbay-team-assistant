@@ -1,13 +1,17 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-from __future__ import unicode_literals
+from __future__ import absolute_import, print_function, unicode_literals
 
 import ConfigParser
-from glob import glob
+import datetime
+from glob import glob as _glob
+from os.path import realpath
 from StringIO import StringIO
 
-from utils import storage, _decode
+from .utils import storage, _decode
+
+glob = lambda f: map(realpath, _glob(f))
 
 
 class Setting(object):
@@ -50,6 +54,20 @@ class Setting(object):
         lst = self._get_option_multi_line(key, default)
         return reduce(lambda x, y: x + y, map(glob, lst))
 
+    def _split_condition(self, condition):
+        checked_yesterday = None
+        check_list = [x.strip() for x in condition.split(':')]
+        try:
+            days, rate, checked_today, points, checked_yesterday = check_list
+        except ValueError:  # 兼容旧的配置文件
+            days, rate, checked_today, points = check_list
+
+        __ = lambda x: bool(int(x)) if x else None
+        return storage(days=days, rate=rate, points=points,
+                       checked_today=__(checked_today),
+                       checked_yesterday=__(checked_yesterday),
+                       )
+
     def settings(self):
         username = self._get_option('username')
         password = self._get_option('password')
@@ -70,26 +88,28 @@ class Setting(object):
 
         # 踢人开始时间
         start_time = self._get_option('start_time')
+        start_time = datetime.datetime.strptime(start_time, '%H:%M').time()
 
         # 成员加入条件
-        limit = self._get_option('limit', 1000)
+        limit = self._get_option('limit', 10000)
         default_limit = self._get_option('default_limit')
 
         # 欢迎
         welcome = self._get_option('welcome', '<=0')
         welcome_title = self._get_option('welcome_title')
-        welcome_template = self._get_option_f('welcome_template',
-                                              ['welcome_mail.txt'])
+        welcome_template = self._get_option_multi_line_f('welcome_template',
+                                                         ['welcome_mail.txt'])
         # 警告
-        warnning = self._get_option_list('warnning')
+        warnning = map(self._split_condition,
+                       self._get_option_list('warnning'))
         warnning_title = self._get_option('warnning_title')
-        warnning_template = self._get_option_f('warnning_template',
-                                               ['warn_mail.txt'])
+        warnning_template = self._get_option_multi_line_f('warnning_template',
+                                                          ['warn_mail.txt'])
         # 踢人
-        dismiss = self._get_option_list('dismiss')
+        dismiss = map(self._split_condition, self._get_option_list('dismiss'))
         dismiss_title = self._get_option('dismiss_title')
-        dismiss_template = self._get_option_f('dismiss_template',
-                                              ['dismiss_mail.txt'])
+        dismiss_template = self._get_option_multi_line_f('dismiss_template',
+                                                         ['dismiss_mail.txt'])
         # 恭喜
         congratulate = map(int, self._get_option_list('congratulate'))
         congratulate_title = self._get_option('congratulate_title')
@@ -99,6 +119,12 @@ class Setting(object):
 
         # 询问
         confirm = self._get_option_bool('confirm', True)
+
+        # template 是内容字符串，而不是文件名？
+        is_template_string = False
+
+        # 被踢人数阈值，如果总被踢人数超过此值将不执行踢人操作
+        max_dismiss = int(self._get_option('max_dismiss', 10000))
 
         d = locals()
         d.pop('self')

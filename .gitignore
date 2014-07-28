@@ -2,6 +2,11 @@
 settings*.ini
 /templates/*/*.txt
 /templates/*.txt
+a.txt
+f.txt
+run.bat
+run.sh
+upload.py
 
 # C extensions
 *.so

@@ -37,7 +37,12 @@
 可以通过 -s 指定配置文件： ``` python assistant.py -s settings_biaohan.ini```
 
 ### 发送通知短信
-命令行下执行 ```python assistant.py  -a announce.txt -t "来自小组的邀请"```
+命令行下执行 ```python assistant.py -s settings_biaohan.ini -a announce.txt -t "来自小组的邀请"```
 
 其中 ```announce.txt``` 是通知内容，可以参考目录下的 ```templates/announce.txt.example```， ```来自小组的邀请``` 是通知的标题。
 
+
+## 谁在使用
+
+* [彪悍的人生无需解释小组](http://www.shanbay.com/team/detail/3352/)
+* [轻舞飞扬小组](http://www.shanbay.com/team/detail/2320/)
