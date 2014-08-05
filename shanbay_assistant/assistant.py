@@ -255,6 +255,7 @@ class Assistant(object):
             # 踢人
             if self.check_dismiss(member):
                 all_dismiss_members.append(member)
+                print('标记为将要被踢的人员')
 
         print('\n踢人:')
         # 先检查有多少符合踢人条件，在执行踢人操作
