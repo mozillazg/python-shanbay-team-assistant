@@ -172,7 +172,6 @@ class Assistant(object):
         if condition_bool:
             return member
 
-
     def check_warnning(self, member):
         """警告"""
         if not self.settings.warnning:
@@ -239,11 +238,6 @@ class Assistant(object):
             if member['username'].lower() == self.username.lower():
                 continue
 
-            # 踢人
-            if self.check_dismiss(member):
-                all_dismiss_members.append(member)
-                continue
-
             self.output_member_info(member)
 
             # 新人
@@ -258,6 +252,11 @@ class Assistant(object):
             if self.check_warnning(member):
                 warnning_members.append(member)
 
+            # 踢人
+            if self.check_dismiss(member):
+                all_dismiss_members.append(member)
+
+        print('\n踢人:')
         # 先检查有多少符合踢人条件，在执行踢人操作
         for member in all_dismiss_members:
             # 操作阈值不执行踢人操作
@@ -282,7 +281,7 @@ class Assistant(object):
                         print('踢人短信发送失败')
                 else:
                     print('踢人失败')
-        
+
         return {
             'new_members': new_members,
             'congratulate_members': congratulate_members,
@@ -365,7 +364,7 @@ def main():
     format_str = ('%(asctime)s - %(name)s'
                   ' - %(funcName)s - %(lineno)d - %(levelname)s'
                   ' - %(message)s')
-    logging.basicConfig(filename='debug.log', level=logging.INFO,
+    logging.basicConfig(filename='debug.log', level=logging.DEBUG,
                         format=format_str)
     writer = PrintStrWriter()
     sys.stdout = writer
