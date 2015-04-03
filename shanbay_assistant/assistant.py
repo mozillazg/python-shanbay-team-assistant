@@ -52,6 +52,7 @@ class Assistant(object):
                 print('设置更新成功')
             else:
                 print('设置更新失败')
+                logger.error('update settings failed')
 
     def check_time(self):
         """检查是否到了可以查卡的时间"""
@@ -66,6 +67,7 @@ class Assistant(object):
         else:
             print('时间还早者呢，请 {0} 后再操作!'.format(self.settings.start_time))
             self.update_limit(self.settings.default_limit)
+            logger.info("it's too early to do it")
 
     def get_all_members(self, max_page):
         """获取所有成员信息"""
@@ -78,6 +80,7 @@ class Assistant(object):
             time.sleep(self.sleep_time)
 
         print('total: %s人' % len(all_members))
+        logger.info('total: %s人' % len(all_members))
         self.members = all_members
         return all_members
 
@@ -97,6 +100,7 @@ class Assistant(object):
                 print('欢迎短信已发送')
             else:
                 print('欢迎短信发送失败')
+                logger.error('send welcome mail failed')
             return member
 
     def check_congratulate(self, member):
@@ -119,6 +123,7 @@ class Assistant(object):
                     print('恭喜短信已发送')
                 else:
                     print('恭喜短信发送失败')
+                    logger.error('send congratulate mail failed')
                 return member
 
     def announce(self):
@@ -134,6 +139,7 @@ class Assistant(object):
                 print('成功通知 %s' % member['nickname'])
             else:
                 print('通知发送失败!')
+                logger.error('send notify mail failed')
 
     def _check_condition(self, conditions, member):
         condition_bool = False
@@ -191,6 +197,7 @@ class Assistant(object):
             print('警告短信已发送')
         else:
             print('警告短信发送失败')
+            logger.error('send warning mail failed')
         return member
 
     def update_topic(self, dismiss_num):
@@ -210,6 +217,7 @@ class Assistant(object):
                 print('帖子更新成功')
             else:
                 print('帖子更新失败')
+                logger.error('update topic failed')
 
         if self.settings.update_grow_up_topic and self.confirm('\n更新小组数据贴 (y/n) '):
             context = team_info
@@ -222,6 +230,7 @@ class Assistant(object):
                 print('帖子更新成功')
             else:
                 print('帖子更新失败')
+                logger.error('update topic failed')
 
         return team_info
 
@@ -258,14 +267,20 @@ class Assistant(object):
                 print('标记为将要被踢的人员')
 
         print('\n踢人:')
-        # 先检查有多少符合踢人条件，在执行踢人操作
-        for member in all_dismiss_members:
-            # 操作阈值不执行踢人操作
-            if len(all_dismiss_members) > self.settings.max_dismiss:
-                if self.confirm('将要被踢的总人数（%s人）超过了阈值（%s人）。是否终止踢人操作？ (y/n) '
-                                % (len(all_dismiss_members), self.settings.max_dismiss)):
-                    return {}
+        # 是否超过阈值
+        if len(all_dismiss_members) > self.settings.max_dismiss:
+            if self.confirm('将要被踢的总人数（%s人）超过了阈值（%s人）。是否终止踢人操作？ (y/n) '
+                            % (len(all_dismiss_members), self.settings.max_dismiss)):
+                logger.warn('current(%s) > max_dismiss(%s), exit dismiss action',
+                            len(all_dismiss_members), self.settings.max_dismiss)
+                return {
+                    'new_members': new_members,
+                    'congratulate_members': congratulate_members,
+                    'warnning_members': warnning_members,
+                    'dismiss_members': dismiss_members
+                }
 
+        for member in all_dismiss_members:
             self.output_member_info(member)
             if self.confirm('是否踢人并发送踢人短信? (y/n) '):
                 if Retry(ignore_error=True)(self.team.dismiss, member['id']):
@@ -280,8 +295,10 @@ class Assistant(object):
                         print('踢人短信已发送')
                     else:
                         print('踢人短信发送失败')
+                        logger.error('send dismiss mail failed')
                 else:
                     print('踢人失败')
+                    logger.error('dismiss failed')
 
         return {
             'new_members': new_members,
@@ -338,17 +355,17 @@ def check(settings):
     # 对所有成员进行操作
     print('\n开始对所有成员进行处理')
     try:
-        dismiss_members = assistant.handle()['dismiss_members']
+        dismiss_members = assistant.handle().get('dismiss_members', [])
         print('\n被踢:')
         for x in dismiss_members:
             assistant.output_member_info(x)
         print('')
         # 更新查卡贴
         team_info = assistant.update_topic(len(dismiss_members))
-    except KeyError:
+    except Exception as e:
         dismiss_members = []
         team_info = {}
-        logger.exception("")
+        logger.exception(e)
 
     # 更新成员加入条件
     assistant.update_limit(settings.default_limit)
@@ -382,6 +399,7 @@ def main():
             check(settings)
         except AuthException:
             print('登录失败')
+            logger.error('login failed')
         except (EOFError, KeyboardInterrupt):
             pass
         except Exception as e:
