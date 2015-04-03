@@ -1,5 +1,7 @@
 # shanbay team assistant
 
+[![Build Status](https://travis-ci.org/mozillazg/python-shanbay-team-assistant.svg)](https://travis-ci.org/mozillazg/python-shanbay-team-assistant)
+
 [扇贝网](http://www.shanbay.com) 小组管理助手。
 
 目前专为 [彪悍的人生无需解释](http://www.shanbay.com/team/detail/3352/) 小组定制。
