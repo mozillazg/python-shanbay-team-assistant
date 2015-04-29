@@ -24,6 +24,9 @@
 
 ## 使用
 
+下载：       
+https://github.com/mozillazg/python-shanbay-team-assistant/releases
+
 ### 安装依赖
 ```pip install -r requirements.txt```
 
@@ -48,3 +51,4 @@
 
 * [彪悍的人生无需解释小组](http://www.shanbay.com/team/detail/3352/)
 * [轻舞飞扬小组](http://www.shanbay.com/team/detail/2320/)
+* [35000单词不是梦小组](http://www.shanbay.com/team/detail/10879/)
