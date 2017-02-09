@@ -2,7 +2,7 @@
 
 [![Build Status](https://travis-ci.org/mozillazg/python-shanbay-team-assistant.svg)](https://travis-ci.org/mozillazg/python-shanbay-team-assistant)
 
-[扇贝网](http://www.shanbay.com) 小组管理助手。
+[扇贝网](http://www.shanbay.com) 小组管理助手(Powered by [python-shanbay](https://github.com/mozillazg/python-shanbay]))。
 
 目前专为 [彪悍的人生无需解释](http://www.shanbay.com/team/detail/3352/) 小组定制。
 
@@ -24,7 +24,7 @@
 
 ## 使用
 
-下载：       
+下载：
 https://github.com/mozillazg/python-shanbay-team-assistant/releases
 
 ### 安装依赖
