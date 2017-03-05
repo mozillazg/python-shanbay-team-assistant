@@ -335,22 +335,16 @@ def check(settings):
     settings = assistant.settings
     team = assistant.team
 
-    if not settings.announce_file:
-        # 判断当前时间
-        if not assistant.check_time():
-            sys.exit(0)
-
-    # 获取成员信息
-    max_page = Retry()(team.max_page)
-    assistant.get_all_members(max_page)
-
-    # 给全体组员发短信
-    if settings.announce_file:
-        assistant.announce()
+    # 判断当前时间
+    if not assistant.check_time():
         sys.exit(0)
 
     # 设置加入条件
     assistant.update_limit(settings.limit)
+
+    # 获取成员信息
+    max_page = Retry()(team.max_page)
+    assistant.get_all_members(max_page)
 
     # 对所有成员进行操作
     print('\n开始对所有成员进行处理')

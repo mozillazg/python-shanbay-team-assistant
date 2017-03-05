@@ -19,7 +19,6 @@
 * 回帖
 * 发送欢迎、恭喜、警告、踢人站内短信
 * 支持半自动/全自动执行查卡操作
-* 支持发送通知短信（给所有组员群发短信）
 
 
 ## 使用
@@ -40,12 +39,6 @@ https://github.com/mozillazg/python-shanbay-team-assistant/releases
 命令行下执行 ```python assistant.py```
 
 可以通过 -s 指定配置文件： ``` python assistant.py -s settings_biaohan.ini```
-
-### 发送通知短信
-命令行下执行 ```python assistant.py -s settings_biaohan.ini -a announce.txt -t "来自小组的邀请"```
-
-其中 ```announce.txt``` 是通知内容，可以参考目录下的 ```templates/announce.txt.example```， ```来自小组的邀请``` 是通知的标题。
-
 
 ## 谁在使用
 
